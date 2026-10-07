@@ -1,0 +1,78 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: abhisaran-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: abhisaran
+      POSTGRES_USER: abhisaran_user
+      POSTGRES_PASSWORD: abhisaran_local_password_secure_123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U abhisaran_user -d abhisaran"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile
+    container_name: abhisaran-api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      PORT: 8080
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/abhisaran
+      SPRING_DATASOURCE_USERNAME: abhisaran_user
+      SPRING_DATASOURCE_PASSWORD: abhisaran_local_password_secure_123
+      JWT_SECRET: super_secure_abhisaran_jwt_secret_key_at_least_32_bytes_long_2026
+      BOOTSTRAP_ADMIN_ID: admin
+      BOOTSTRAP_ADMIN_PASSWORD: Admin#Bootstrap2026!
+      AI_SERVICE_URL: http://ai:8000
+      AI_SERVICE_TOKEN: internal_secret_token_between_spring_and_fastapi_32bytes
+      FEATURE_AI: "false"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  ai:
+    build:
+      context: ./apps/ai
+      dockerfile: Dockerfile
+    container_name: abhisaran-ai
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      AI_SERVICE_TOKEN: internal_secret_token_between_spring_and_fastapi_32bytes
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  web:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile
+    container_name: abhisaran-web
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "3000:80"
+
+volumes:
+  postgres_data:
