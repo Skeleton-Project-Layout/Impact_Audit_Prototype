@@ -30,23 +30,41 @@ Flow: `Logo splash → Login (Government Officer | Admin) → Admin: [Audit] or 
 1. **No fake data, ever.** Every number, name, officer, score, strength or gap on screen comes from the database. Empty state = an empty-state message, never placeholder numbers. A `seed:demo` script may create rows flagged `is_demo=true`; the UI shows a visible "DEMO DATA" banner and production refuses to run it.
 2. **No backdoor credentials.** No default/shared password in code, migrations or comments. No seeded users. The first admin is created once from env vars `BOOTSTRAP_ADMIN_ID` / `BOOTSTRAP_ADMIN_PASSWORD`, flagged `must_change_password`, and the bootstrap is a no-op if any admin exists.
 3. **No default secrets.** App refuses to start if `JWT_SECRET`/`SESSION_SECRET` is missing or < 32 bytes. No `localhost` URLs in frontend code; use a relative `/api` base or `VITE_API_BASE_URL`.
-4. **Scores are never produced by AI.** The scoring engine is a pure, deterministic TypeScript function (`packages/scoring`). No LLM, no randomness, no clock reads, no I/O inside it. An optional LLM "plain-language summary" may exist behind `FEATURE_AI_SUMMARY=false` (default off); if on, it only rephrases already-computed deductions, is labelled **DRAFT**, and can never change a score, band, flag or status.
+4. **Scores are never produced by AI.** The scoring engine is a pure, deterministic Java class (`ScoringEngine`, no Spring/DB/clock/random/network inside it). The Python AI service (Section 3A) has **no write path** to scores, bands, flags, answers, evidence status or any stored result; its outputs are always `DRAFT`, stored in a separate table, and never feed back into scoring.
 5. **Scoring references stable option IDs, never string matching.** (No `contains("FORMAL")`-style logic — "INFORMAL" would match.)
 6. **Missing ≠ zero.** An unanswered question is *Not assessed* (excluded and reported as coverage); a real "No / Not available" answer is a real 0. Never silently convert one into the other.
 7. **Migrations are immutable once committed.** Never edit an applied migration — add a new one. CI fails if a committed migration file's checksum changes.
-8. **Tests run against real PostgreSQL with real migrations** (docker/Testcontainers). Not H2, not mocks, for anything involving persistence, rollbacks, or security.
+8. **Tests run against real PostgreSQL with the real Flyway migrations** (Testcontainers). Not H2, not mocks, for anything involving persistence, rollbacks, or security. `spring.jpa.hibernate.ddl-auto=validate`; JSONB columns mapped with `@JdbcTypeCode(SqlTypes.JSON)`.
 9. **Never report success that didn't happen.** A failed/404/403 sync is an error, not "synced". A deletion screen/certificate must correspond to rows actually deleted. A transaction that throws must not leave a half-record or lose an audit entry.
-10. **Server is the authority.** RBAC, scoring, status transitions and visibility rules are enforced on the server. The client may *preview* with the same pure module but never decides what is stored or shown.
+10. **Server is the authority.** RBAC, scoring, status transitions and visibility rules are enforced on the server. The browser never computes a stored or displayed score; the rubric tester in the question builder calls the API (`POST /questions/:id/test-rubric`), which runs the same `ScoringEngine`.
 
 ---
 
-## 3. TECH STACK AND REPO (DEFAULT — tell me if you'd choose differently at the design gate)
+## 3. TECH STACK AND REPO (FIXED — do not substitute)
 
-- Monorepo: `apps/web` (React + TypeScript + Vite), `apps/api` (Node 20 + TypeScript + Fastify), `packages/scoring` (pure TS, shared), `packages/db` (migrations + typed queries; Drizzle or Prisma).
-- PostgreSQL (Supabase-hosted in production; pooler connection string). Evidence files in a **private** object-storage bucket (Supabase Storage), served only through API-issued short-lived signed URLs (5 min) after an authorization check.
-- Deploy: web as static site, API as web service on Render free tier; `render.yaml` included; migrations run in a pre-deploy step. Free tiers cold-start — the splash/loader must handle a 30–60 s cold start gracefully ("Waking up the server…", retry with backoff, never a blank screen).
-- Auth: argon2id password hashing; httpOnly + Secure + SameSite=Lax session cookie (or short JWT in httpOnly cookie) with CSRF protection; 8 h absolute / 30 min idle expiry.
+- **Frontend:** React + TypeScript + Vite (`apps/web`). Two shells inside one app: public/login + admin + officer, with shared design system, API client, permissions.
+- **Backend (system of record and rule authority):** **Java 21 + Spring Boot 3.x** (`apps/api`, Maven): Spring Web, Spring Data JPA, **Spring Security**, **Flyway**, Bean Validation, Actuator. Packages: `auth, users, geography, locations, questions, audit (pages/answers), evidence, scoring, analysis, delivery, officers, registry, auditlog, ai (client), common`.
+- **AI service (assistive only):** **Python 3.11 + FastAPI** (`apps/ai`). See Section 3A.
+- **Database:** PostgreSQL (Supabase-hosted in production, pooler connection string). **Evidence files** in a private Supabase Storage bucket, served only through backend-issued short-lived signed URLs (5 min) after an authorization check.
+- **Shared test data:** `shared/golden-vectors/*.json` — scoring input/expected-output vectors used by the Java tests (and by the AI service's isolation tests).
+- **Auth:** Spring Security; **Argon2id** (or BCrypt cost ≥ 12) password hashing; httpOnly + Secure + SameSite=Lax session cookie or short-lived JWT in an httpOnly cookie; CSRF protection; 8 h absolute / 30 min idle expiry; login rate limiting stored in the DB (or Bucket4j). Method-level `@PreAuthorize` **plus** object-level checks in services (district scope for officers).
+- **Deploy:** Dockerfiles for `api`, `ai`, `web`; `render.yaml` + `docker-compose.yml` for local. Free-tier cold starts (30–60 s) must be handled gracefully by the splash/loader ("Waking up the server…", retry with backoff, never a blank screen). Spring must bind `server.port=${PORT:8080}`; Actuator `/actuator/health` public with `show-details=never`; all other actuator endpoints authenticated or disabled. Add `org.flywaydb:flyway-database-postgresql` (Postgres 16/17 support). Flyway `validate-on-migrate=true`; never `repair` in production code paths.
 - All UI strings in a single i18n file (English now; Hindi later).
+
+---
+
+## 3A. AI SERVICE (Python / FastAPI) — ASSISTIVE ONLY
+
+**Purpose:** help humans, never decide. Spring calls it **server-to-server only** (the browser never talks to it); it is not publicly routable; it requires an internal shared token (`AI_SERVICE_TOKEN`); timeouts ≤ 8 s; if it is down, every audit/score/dashboard feature still works (the AI features simply show "unavailable"). Feature-flagged: `FEATURE_AI=false` by default.
+
+**Allowed endpoints (all responses carry `model/service id, timestamp, input refs (IDs only), output, quality metadata, status=DRAFT`):**
+- `POST /v1/pii-screen` — scans free text (and OCR'd evidence text) for Aadhaar-like numbers, mobile numbers, e-mails and likely person names; returns *suspected* findings. Used as an extra warning layer; the Java regex check remains the authoritative gate.
+- `POST /v1/extract-text` — OCR / text extraction from an evidence image or PDF (to help the admin read a register photo). Output is a suggestion shown next to the file, never stored as an answer automatically.
+- `POST /v1/summarise-run` — a plain-language narrative of an **already-computed** analysis run, built only from the deduction ledger and alerts passed in. Labelled "AI-drafted summary — not an official finding".
+- `POST /v1/group-observations` — groups similar free-text notes/gaps for readability.
+
+**Forbidden for the AI service (enforce with tests):** computing or adjusting any ACS, earned/max points, band, colour, severity, weight, coverage; marking evidence verified; creating/changing questions, rubrics or alerts; choosing districts/officers; any write to the main database (it has **no DB credentials at all**). Spring stores AI drafts in `ai_drafts` (separate table, status `DRAFT|ACCEPTED|REJECTED`); an admin must explicitly accept a draft, and even then it only appears as labelled narrative text — it never alters scoring tables. The AI service receives **only** code-based, PII-screened content (never names/registry data).
+- Add `ai_drafts` to the data model and the `/api/v1/ai/*` proxy endpoints to Section 15 (admin-only).
 
 ---
 
@@ -237,7 +255,7 @@ On a successful analysis the server, in the same transaction, creates a `deliver
 
 ## 13. DATA MODEL (normalised; design the ER diagram in docs)
 
-`users` (id, login_id, role ADMIN|OFFICER, display_name, designation, password_hash, must_change_password, active) · `states`, `districts` (state_id, code3, name, **seeded from a vetted public dataset such as LGD; admin can add/edit**) · `officer_districts` (officer_id, district_id) · `pilot_location_types` · `pilot_locations` (code UNIQUE, type_id, district_id, status, is_demo, created_by) · `pilot_location_registry` (location_id, name, official_code) · `question_bank` / `question_versions` (fields JSONB, rubric JSONB, severity, applies_to, evidence_enabled, hint, alert overrides, status) · `severity_weights`, `alert_bands`, `scoring_settings` (versioned) · `audit_pages` (location_id, number, status, question_version_ids) · `answers` (page_id, question_version_id, value JSONB, na_reason, not_assessed_reason) · `evidence` (answer/question ref, storage_key, mime, size, uploaded_by) · `submissions` · `analysis_runs`, `analysis_items`, `analysis_ledger` · `deliveries` · `audit_log` (append-only: who, role, action, object, before, after, reason, ip, at) · `login_attempts`. No table stores beneficiary or staff personal data.
+`users` (id, login_id, role ADMIN|OFFICER, display_name, designation, password_hash, must_change_password, active) · `states`, `districts` (state_id, code3, name, **seeded from a vetted public dataset such as LGD; admin can add/edit**) · `officer_districts` (officer_id, district_id) · `pilot_location_types` · `pilot_locations` (code UNIQUE, type_id, district_id, status, is_demo, created_by) · `pilot_location_registry` (location_id, name, official_code) · `question_bank` / `question_versions` (fields JSONB, rubric JSONB, severity, applies_to, evidence_enabled, hint, alert overrides, status) · `severity_weights`, `alert_bands`, `scoring_settings` (versioned) · `audit_pages` (location_id, number, status, question_version_ids) · `answers` (page_id, question_version_id, value JSONB, na_reason, not_assessed_reason) · `evidence` (answer/question ref, storage_key, mime, size, uploaded_by) · `submissions` · `analysis_runs`, `analysis_items`, `analysis_ledger` · `deliveries` · `ai_drafts` (target_type, target_id, service_id, input_refs, output, quality, status, accepted_by) · `audit_log` (append-only: who, role, action, object, before, after, reason, ip, at) · `login_attempts`. No table stores beneficiary or staff personal data.
 
 ---
 
@@ -254,6 +272,7 @@ On a successful analysis the server, in the same transaction, creates a `deliver
 
 `POST /auth/login` · `POST /auth/logout` · `POST /auth/change-password` · `GET /health`
 Admin: `GET/POST /locations` · `GET /locations/:id` · `POST /locations/:id/pages` · `PUT /pages/:id/answers` · `POST /pages/:id/duplicate` · `DELETE|POST /pages/:id` (delete/clear while DRAFT) · `POST /pages/:pageId/evidence` · `DELETE /evidence/:id` (DRAFT only) · `POST /locations/:id/submit` · `POST /locations/:id/reopen` · `POST /locations/:id/analyse` · `POST /locations/analyse-bulk` · `GET /locations/:id/runs` · `GET/POST/PUT /questions` · `POST /questions/:id/test-rubric` · `GET/POST/PUT /officers` · `POST /officers/:id/reset-password` · `GET /registry/:locationId` · `GET /audit-log` · `GET /reference/states|districts|location-types`
+AI (admin only, proxied by Spring, flag-gated): `POST /ai/extract-text/:evidenceId` · `POST /ai/summarise-run/:runId` · `POST /ai/drafts/:id/accept|reject`
 Officer: `GET /me/inbox` · `GET /me/results` · `GET /me/results/:runId` · `GET /me/results/:runId/evidence/:id`
 Shared read model for details: `GET /results/:runId` (server decides what the caller may see).
 
@@ -261,7 +280,7 @@ Shared read model for details: `GET /results/:runId` (server decides what the ca
 
 ## 16. TESTS THAT MUST EXIST AND PASS (real PostgreSQL)
 
-- **Scoring (pure unit + golden vectors with explicit numbers):** water *available-not-functional = 1/2*; GRID with/without `score_used`; CHECKLIST Yes/Partial/No/N-A; RATING 1–5 mapping; PERCENT_THRESHOLD incl. partial margin and inverted polarity; RATIO with denominator 0; severity weights; **ledger sums to exactly 100 − ACS**; N/A rebasing; unanswered/could-not-assess excluded and counted in coverage; PROVISIONAL below min coverage; `null` ACS when nothing assessed; band edges (39.99/40, 54.99/55, 69.99/70, 89.99/90); **Critical-<50 % ⇒ RED**; multi-page pooling; determinism (same input ⇒ identical output 1 000×); no `contains()`-style matching (options are IDs).
+- **Scoring (JUnit 5 pure unit tests + golden vectors from `shared/golden-vectors` with explicit numbers):** water *available-not-functional = 1/2*; GRID with/without `score_used`; CHECKLIST Yes/Partial/No/N-A; RATING 1–5 mapping; PERCENT_THRESHOLD incl. partial margin and inverted polarity; RATIO with denominator 0; severity weights; **ledger sums to exactly 100 − ACS**; N/A rebasing; unanswered/could-not-assess excluded and counted in coverage; PROVISIONAL below min coverage; `null` ACS when nothing assessed; band edges (39.99/40, 54.99/55, 69.99/70, 89.99/90); **Critical-<50 % ⇒ RED**; multi-page pooling; determinism (same input ⇒ identical output 1 000×); no `contains()`-style matching (options are IDs).
 - **Versioning:** editing a question never changes a submitted audit or an existing run; re-analyse creates a new run.
 - **RBAC / visibility:** officer cannot read other districts, unanalysed locations, registry, names, audit log; scope change takes effect immediately; admin-only routes reject officers; **no API response outside the registry ever contains a location name**; free-text masking works; Aadhaar/phone/e-mail rejected on save.
 - **State machine:** DRAFT → SUBMITTED → ANALYSED → REOPENED → re-submitted → "Re-analysis needed"; submitted pages are immutable; delete/clear only in DRAFT.
@@ -269,6 +288,7 @@ Shared read model for details: `GET /results/:runId` (server decides what the ca
 - **Auth:** no default credentials exist; bootstrap is once-only; lockout after 5 failures; generic error message; forced password change; app refuses to boot without secrets.
 - **Evidence:** wrong magic bytes rejected; EXIF stripped; signed URL expires; officer outside scope gets 403/404.
 - **Migrations:** CI fails if a committed migration's checksum changes; fresh-DB and upgrade paths both pass.
+- **AI isolation (Java + Python):** the AI service has no DB credentials; no scoring/answer/evidence-status table is writable by the AI client class (architecture test); AI outputs are always `DRAFT`; accepting a draft changes no score; with `FEATURE_AI=false` or the service down, all core flows still pass; the AI service never receives location names or registry data.
 - **E2E (Playwright):** splash → admin login → create location → fill 2 pages with evidence → submit → analyse → officer (with matching district) logs in, sees the ACS, opens details and evidence; second officer (other district) sees nothing.
 - **Accessibility/perf:** keyboard navigable, reduced-motion respected, splash/loader ≥ 55 fps on throttled CPU.
 
@@ -284,7 +304,8 @@ Shared read model for details: `GET /results/:runId` (server decides what the ca
 5. **Scoring engine + analysis + details view** (spectrum, ledger/waterfall, alerts, evidence), run history.
 6. **Officers + scope + deliveries + officer portal.**
 7. **Dashboard filters, bulk analyse, PDF reports, audit-log screen, registry, polish, accessibility.**
-8. **Hardening & deploy:** security review, full test suite on Postgres, `render.yaml`, runbook, backup/restore notes.
+8. **AI assistive service (Python/FastAPI):** PII-screen, text extraction, run-summary drafts, `ai_drafts` table, accept/reject UI, isolation tests. *Gate: everything works with `FEATURE_AI=false` and with the service stopped.*
+9. **Hardening & deploy:** security review, full test suite on Postgres, `render.yaml`, runbook, backup/restore notes.
 
 ---
 
