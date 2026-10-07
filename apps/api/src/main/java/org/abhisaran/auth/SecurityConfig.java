@@ -29,6 +29,8 @@ public class SecurityConfig {
                     "/api/v1/health",
                     "/api/v1/auth/login"
                 ).permitAll()
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/geography/**").permitAll()
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/facilities/types").permitAll()
                 .requestMatchers("/api/v1/**").authenticated()
                 .anyRequest().permitAll()
             )

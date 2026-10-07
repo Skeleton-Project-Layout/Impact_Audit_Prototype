@@ -2,15 +2,18 @@ import React from 'react';
 
 interface AbhisaranLoaderProps {
   status?: string;
+  message?: string;
   size?: number;
   className?: string;
 }
 
 export const AbhisaranLoader: React.FC<AbhisaranLoaderProps> = ({
   status = 'Loading…',
+  message,
   size = 56,
   className = ''
 }) => {
+  const displayText = message || status;
   return (
     <div
       role="status"
@@ -86,7 +89,7 @@ export const AbhisaranLoader: React.FC<AbhisaranLoaderProps> = ({
         </g>
       </svg>
 
-      {status && (
+      {displayText && (
         <span
           style={{
             fontSize: '13px',
@@ -96,7 +99,7 @@ export const AbhisaranLoader: React.FC<AbhisaranLoaderProps> = ({
             textAlign: 'center'
           }}
         >
-          {status}
+          {displayText}
         </span>
       )}
     </div>

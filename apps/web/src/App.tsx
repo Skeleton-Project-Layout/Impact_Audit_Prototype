@@ -2,11 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { SplashSequence } from './components/SplashSequence';
 import { LoginScreen, UserSession } from './features/auth/LoginScreen';
 import { BrandLogo } from './components/BrandLogo';
+import { GeographyManagementScreen } from './features/geography/GeographyManagementScreen';
+import { FacilityRegistryScreen } from './features/facilities/FacilityRegistryScreen';
 
 export const App: React.FC = () => {
   const [showSplash, setShowSplash] = useState<boolean>(true);
   const [currentUser, setCurrentUser] = useState<UserSession | null>(null);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const [adminView, setAdminView] = useState<'overview' | 'geography' | 'facilities'>('overview');
 
   useEffect(() => {
     // Check if splash was already viewed in this browser session
@@ -33,6 +36,7 @@ export const App: React.FC = () => {
       await fetch('/api/v1/auth/logout', { method: 'POST' });
     } finally {
       setCurrentUser(null);
+      setAdminView('overview');
     }
   };
 
@@ -61,7 +65,69 @@ export const App: React.FC = () => {
           zIndex: 40
         }}
       >
-        <BrandLogo size={34} showWordmark={true} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+          <div onClick={() => setAdminView('overview')} style={{ cursor: 'pointer' }}>
+            <BrandLogo size={34} showWordmark={true} />
+          </div>
+
+          {currentUser.role === 'ADMIN' && (
+            <nav style={{ display: 'flex', gap: '4px' }}>
+              <button
+                type="button"
+                onClick={() => setAdminView('overview')}
+                className="btn"
+                style={{
+                  background: adminView === 'overview' ? 'var(--surface-2)' : 'transparent',
+                  color: adminView === 'overview' ? 'var(--accent)' : 'var(--muted)',
+                  fontWeight: adminView === 'overview' ? 600 : 500,
+                  fontSize: '13px',
+                  padding: '6px 12px',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer'
+                }}
+              >
+                Overview
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setAdminView('geography')}
+                className="btn"
+                style={{
+                  background: adminView === 'geography' ? 'var(--surface-2)' : 'transparent',
+                  color: adminView === 'geography' ? 'var(--accent)' : 'var(--muted)',
+                  fontWeight: adminView === 'geography' ? 600 : 500,
+                  fontSize: '13px',
+                  padding: '6px 12px',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer'
+                }}
+              >
+                Geography Hierarchy
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setAdminView('facilities')}
+                className="btn"
+                style={{
+                  background: adminView === 'facilities' ? 'var(--surface-2)' : 'transparent',
+                  color: adminView === 'facilities' ? 'var(--accent)' : 'var(--muted)',
+                  fontWeight: adminView === 'facilities' ? 600 : 500,
+                  fontSize: '13px',
+                  padding: '6px 12px',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer'
+                }}
+              >
+                Facility Registry
+              </button>
+            </nav>
+          )}
+        </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           <span style={{ fontSize: '13px', color: 'var(--muted)' }}>
@@ -99,50 +165,85 @@ export const App: React.FC = () => {
 
         {currentUser.role === 'ADMIN' ? (
           <div>
-            <h1 style={{ fontSize: '24px', fontWeight: 700, marginBottom: '8px', color: 'var(--ink)' }}>
-              Admin Home
-            </h1>
-            <p style={{ color: 'var(--muted)', marginBottom: '32px' }}>
-              Field audit coordination, pilot location registry, and scoring decision support.
-            </p>
+            {adminView === 'overview' && (
+              <div>
+                <h1 style={{ fontSize: '24px', fontWeight: 700, marginBottom: '8px', color: 'var(--ink)' }}>
+                  Admin Home
+                </h1>
+                <p style={{ color: 'var(--muted)', marginBottom: '32px' }}>
+                  Field audit coordination, pilot location registry, and scoring decision support.
+                </p>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
-              <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: 'var(--accent-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)', fontWeight: 700 }}>
-                    📋
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
+                  <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: 'var(--accent-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)', fontWeight: 700 }}>
+                        🗺️
+                      </div>
+                      <div>
+                        <h2 style={{ fontSize: '18px', fontWeight: 600 }}>Geography Management</h2>
+                        <span style={{ fontSize: '13px', color: 'var(--muted)' }}>Jharkhand & 4 pilot districts</span>
+                      </div>
+                    </div>
+                    <p style={{ fontSize: '14px', color: 'var(--muted)', flex: 1 }}>
+                      Inspect administrative hierarchy (Districts, Blocks, Panchayats), add new local blocks and Gram Panchayats.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setAdminView('geography')}
+                      className="btn btn-primary"
+                      style={{ width: '100%' }}
+                    >
+                      Manage Geography
+                    </button>
                   </div>
-                  <div>
-                    <h2 style={{ fontSize: '18px', fontWeight: 600 }}>Open Audit</h2>
-                    <span style={{ fontSize: '13px', color: 'var(--muted)' }}>Select pilot location & collect field evidence</span>
+
+                  <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: 'var(--accent-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)', fontWeight: 700 }}>
+                        🏫
+                      </div>
+                      <div>
+                        <h2 style={{ fontSize: '18px', fontWeight: 600 }}>Facility Registry</h2>
+                        <span style={{ fontSize: '13px', color: 'var(--muted)' }}>Allocate permanent facility codes</span>
+                      </div>
+                    </div>
+                    <p style={{ fontSize: '14px', color: 'var(--muted)', flex: 1 }}>
+                      Register Schools, Anganwadis, and Health Centres with deterministic, non-recyclable codes or bulk upload via CSV.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setAdminView('facilities')}
+                      className="btn btn-secondary"
+                      style={{ width: '100%' }}
+                    >
+                      Open Facility Registry
+                    </button>
+                  </div>
+
+                  <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: 'var(--accent-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)', fontWeight: 700 }}>
+                        📋
+                      </div>
+                      <div>
+                        <h2 style={{ fontSize: '18px', fontWeight: 600 }}>Open Audit</h2>
+                        <span style={{ fontSize: '13px', color: 'var(--muted)' }}>Select pilot location & collect field evidence</span>
+                      </div>
+                    </div>
+                    <p style={{ fontSize: '14px', color: 'var(--muted)', flex: 1 }}>
+                      Conduct multi-page field assessments with offline autosave and per-question evidence attachments.
+                    </p>
+                    <button type="button" className="btn btn-secondary" style={{ width: '100%' }}>
+                      Launch Audit Workspace
+                    </button>
                   </div>
                 </div>
-                <p style={{ fontSize: '14px', color: 'var(--muted)', flex: 1 }}>
-                  Conduct multi-page field assessments for schools, Anganwadis, and health facilities with offline autosave and per-question evidence attachments.
-                </p>
-                <button type="button" className="btn btn-primary" style={{ width: '100%' }}>
-                  Launch Audit Workspace
-                </button>
               </div>
+            )}
 
-              <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: 'var(--accent-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)', fontWeight: 700 }}>
-                    📊
-                  </div>
-                  <div>
-                    <h2 style={{ fontSize: '18px', fontWeight: 600 }}>Open Dashboard</h2>
-                    <span style={{ fontSize: '13px', color: 'var(--muted)' }}>Analyze submissions & view ACS ledgers</span>
-                  </div>
-                </div>
-                <p style={{ fontSize: '14px', color: 'var(--muted)', flex: 1 }}>
-                  Execute deterministic scoring engine, review point deduction waterfalls, monitor district continuity, and supervise officer deliveries.
-                </p>
-                <button type="button" className="btn btn-secondary" style={{ width: '100%' }}>
-                  View Decision Dashboard
-                </button>
-              </div>
-            </div>
+            {adminView === 'geography' && <GeographyManagementScreen />}
+            {adminView === 'facilities' && <FacilityRegistryScreen />}
           </div>
         ) : (
           <div>

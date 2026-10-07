@@ -26,4 +26,11 @@ public class AuditLogService {
                 beforeState, afterState, reason, ipAddress);
         auditLogRepository.save(entry);
     }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void logUserAction(org.abhisaran.users.User user, String action, String objectType, String objectId, String reason, String ipAddress) {
+        UUID actorId = user != null ? user.getId() : null;
+        String actorRole = user != null ? user.getRole().name() : "ANONYMOUS";
+        log(actorId, actorRole, action, objectType, objectId, null, null, reason, ipAddress != null ? ipAddress : "127.0.0.1");
+    }
 }
