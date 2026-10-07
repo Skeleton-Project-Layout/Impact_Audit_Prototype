@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ABHISARAN Field Form</title>
+<style>
+/*__CSS__*/
+.status.error span.t { display: inline !important; }
+</style>
+</head>
+<body>
+
+<header class="hdr">
+  <div class="brand"><b>ABHISARAN</b><span>Village Baseline &amp; Impact Assessment · East Khasi Hills Pilot</span></div>
+  <div class="hdr-actions">
+    <button type="button" data-act="pdf-current" class="btn primary" style="background: linear-gradient(135deg, #10b981, #059669); color: #ffffff; border: 1px solid rgba(255,255,255,0.2); font-weight: 700; margin-right: 0.4rem; display: inline-flex; align-items: center; gap: 0.35rem; box-shadow: 0 2px 4px rgba(0,0,0,0.15);">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><path d="M12 3v12m0 0l-5-5m5 5l5-5M4 21h16"/></svg>
+      <span>⚡ Send &amp; Attach PDF to /source</span>
+    </button>
+    <span id="saveStatus" class="status" role="status"><span class="t">Saved</span></span>
+    <div class="pop">
+      <button id="pdfBtn" class="btn primary" aria-haspopup="true" aria-expanded="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0l-5-5m5 5l5-5M4 21h16"/></svg>
+        <span><span class="lab-long">Download </span>PDF</span>
+      </button>
+      <div class="menu" id="pdfMenu" hidden>
+        <button data-act="pdf-current">Download Current Record<small id="pdfCurSub"></small></button>
+        <button data-act="pdf-all">Download All as One PDF<small id="pdfAllSub"></small></button>
+      </div>
+    </div>
+    <div class="pop">
+      <button id="moreBtn" class="btn icon" aria-label="More actions" aria-haspopup="true" aria-expanded="false">&#8943;</button>
+      <div class="menu" id="moreMenu" hidden>
+        <button data-act="add">+ Add New Page / Village</button>
+        <button data-act="duplicate">Duplicate Current Record<small>Creates a new, independent copy</small></button>
+        <hr>
+        <button data-act="export">Export Data<small>Download a JSON backup</small></button>
+        <button data-act="import">Import Data<small>Restore from a JSON backup</small></button>
+        <hr>
+        <button data-act="delete" class="danger">Delete This Record</button>
+        <button data-act="clear" class="danger">Clear Current Record</button>
+        <button data-act="clearall" class="danger">Clear All Records</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div id="banner" class="banner" hidden>Automatic saving is not available in this browser (private mode or blocked storage). Use <b>Export Data</b> often to keep a backup.</div>
+
+<div class="shell">
+  <aside class="side" aria-label="Sections">
+    <div class="card side-card">
+      <h3>Sections</h3>
+      <div id="navList"></div>
+    </div>
+    <div class="card side-actions">
+      <button class="btn primary" data-act="pdf-current">Download Current Record</button>
+      <button class="btn" data-act="pdf-all">Download All as One PDF</button>
+      <button class="btn" data-act="duplicate">Duplicate Current Record</button>
+      <button class="btn" data-act="export">Export Data (JSON)</button>
+      <button class="btn" data-act="import">Import Data</button>
+    </div>
+  </aside>
+
+  <main>
+    <section class="recbar" aria-label="Village records">
+      <div class="tabs" id="tabs" role="tablist"></div>
+      <button class="btn add" id="addBtn" data-act="add">+ Add New Page</button>
+    </section>
+
+    <section class="card rechead" aria-label="Record header">
+      <div class="rechead-top">
+        <div>
+          <h1>ABHISARAN – VILLAGE BASELINE &amp; IMPACT ASSESSMENT FIELD FORM</h1>
+          <p class="pilot">East Khasi Hills Pilot</p>
+        </div>
+        <span class="recbadge" id="recBadge">Village Record 1 of 1</span>
+      </div>
+      <div class="rechead-fields">
+        <div class="fld"><label for="hdrDate">Date</label><input type="date" id="hdrDate"></div>
+        <div class="fld grow"><label for="hdrVillage">Village</label><input type="text" id="hdrVillage" autocomplete="off" placeholder="Village name"></div>
+      </div>
+    </section>
+
+    <div class="searchbox">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input type="text" id="search" placeholder="Search questions (word or number)" aria-label="Search questions" autocomplete="off">
+      <div class="results" id="results" hidden></div>
+    </div>
+
+    <div class="strip" id="strip">
+      <div class="strip-row"><b id="stripQ">Question 1 of 67</b><span id="stripPct">0% complete</span></div>
+      <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" id="bar"><i id="barFill"></i></div>
+      <select class="jump" id="jump" aria-label="Jump to section"></select>
+    </div>
+
+    <div class="sechead" id="secHead"></div>
+    <form id="form" onsubmit="return false" novalidate></form>
+  </main>
+</div>
+
+<nav class="bottombar" aria-label="Form navigation">
+  <div class="bb-in">
+    <button class="btn" id="prevBtn">&#8249; Previous</button>
+    <span id="bbInfo"></span>
+    <button class="btn primary" id="saveBtn">Save</button>
+    <button class="btn" id="nextBtn">Next &#8250;</button>
+  </div>
+</nav>
+
+<div id="toast" role="status" hidden></div>
+<div id="modal" hidden></div>
+<input type="file" id="importFile" accept=".json,application/json" hidden>
+
+<script>
+/*__JS__*/
+</script>
+</body>
+</html>
