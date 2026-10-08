@@ -2,14 +2,16 @@
 FROM eclipse-temurin:21-jdk-alpine AS builder
 WORKDIR /workspace
 
+# Install Maven in builder stage
+RUN apk add --no-cache maven
+
 # Cache Maven dependencies
-COPY .mvn .mvn
-COPY mvnw pom.xml ./
-RUN ./mvnw dependency:go-offline -B || true
+COPY pom.xml ./
+RUN mvn dependency:go-offline -B || true
 
 # Build application artifact
 COPY src ./src
-RUN ./mvnw clean package -DskipTests -B
+RUN mvn clean package -DskipTests -B
 
 # Runtime Image
 FROM eclipse-temurin:21-jre-alpine
@@ -21,7 +23,7 @@ RUN addgroup -S abhisaran && adduser -S abhisaran -G abhisaran
 # Minimal tools for container healthcheck
 RUN apk add --no-cache curl
 
-COPY --from=builder /workspace/target/abhisaran-api-1.0.0.jar app.jar
+COPY --from=builder /workspace/target/*.jar app.jar
 
 RUN chown -R abhisaran:abhisaran /app
 USER abhisaran
