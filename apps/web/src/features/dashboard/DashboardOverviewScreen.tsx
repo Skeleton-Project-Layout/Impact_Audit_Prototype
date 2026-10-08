@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import './dashboard.css';
 import { AbhisaranLoader } from '../../components/AbhisaranLoader';
+import { PilotLocationReportModal } from './PilotLocationReportModal';
 
 export interface LocationOverviewItem {
   id: string;
@@ -112,6 +113,7 @@ export const DashboardOverviewScreen: React.FC<DashboardOverviewScreenProps> = (
   const [isBulkExecuting, setIsBulkExecuting] = useState<boolean>(false);
   const [bulkResponse, setBulkResponse] = useState<BulkAnalyseResponse | null>(null);
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
+  const [selectedModalLocation, setSelectedModalLocation] = useState<LocationOverviewItem | null>(null);
 
   // Single location scoring handler
   const handleExecuteSingleAnalyse = async (locationId: string) => {
@@ -601,6 +603,8 @@ export const DashboardOverviewScreen: React.FC<DashboardOverviewScreenProps> = (
                   <div
                     key={loc.id}
                     className={`pilot-location-card ${isSelected ? 'selected' : ''} ${bandClass ? bandClass : loc.status.toLowerCase()}`}
+                    onClick={() => setSelectedModalLocation(loc)}
+                    style={{ cursor: 'pointer' }}
                   >
                     {/* Header */}
                     <div className="location-card-header">
@@ -609,19 +613,17 @@ export const DashboardOverviewScreen: React.FC<DashboardOverviewScreenProps> = (
                           type="checkbox"
                           className="card-checkbox"
                           checked={isSelected}
+                          onClick={(e) => e.stopPropagation()}
                           onChange={() => handleToggleSelectLocation(loc.id)}
                           title="Select for bulk actions"
                         />
                         <span
                           className="facility-code-pill"
-                          onClick={() => {
-                            if (isAnalysed && loc.latestRunId) {
-                              onViewAnalysis(loc.id, loc.latestRunId);
-                            } else {
-                              onGoToAudit(loc.id);
-                            }
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedModalLocation(loc);
                           }}
-                          title="Click to open"
+                          title="Click to view pilot report & findings"
                         >
                           {loc.code}
                         </span>
@@ -715,32 +717,26 @@ export const DashboardOverviewScreen: React.FC<DashboardOverviewScreenProps> = (
 
                     {/* Card Footer Actions */}
                     <div className="location-card-footer">
-                      {isAnalysed ? (
-                        <>
-                          <button
-                            type="button"
-                            className="btn btn-primary card-action-btn"
-                            onClick={() => onViewAnalysis(loc.id, loc.latestRunId || undefined)}
-                          >
-                            📊 ACS Report
-                          </button>
-                          <button
-                            type="button"
-                            className="btn btn-secondary card-action-btn"
-                            onClick={() => onGoToAudit(loc.id)}
-                          >
-                            📋 Audit Form
-                          </button>
-                        </>
-                      ) : (
-                        <button
-                          type="button"
-                          className="btn btn-secondary card-action-btn full-width"
-                          onClick={() => onGoToAudit(loc.id)}
-                        >
-                          📋 {isReady ? 'Review Audit Form' : 'Open Field Audit'}
-                        </button>
-                      )}
+                      <button
+                        type="button"
+                        className="btn btn-primary card-action-btn"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedModalLocation(loc);
+                        }}
+                      >
+                        📊 View Findings &amp; Report
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-secondary card-action-btn"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onGoToAudit(loc.id);
+                        }}
+                      >
+                        📋 Audit Form
+                      </button>
                     </div>
                   </div>
                 );
@@ -796,14 +792,8 @@ export const DashboardOverviewScreen: React.FC<DashboardOverviewScreenProps> = (
                       <td>
                         <span
                           className="facility-code-pill"
-                          onClick={() => {
-                            if (isAnalysed && loc.latestRunId) {
-                              onViewAnalysis(loc.id, loc.latestRunId);
-                            } else {
-                              onGoToAudit(loc.id);
-                            }
-                          }}
-                          title="Click to view details"
+                          onClick={() => setSelectedModalLocation(loc)}
+                          title="Click to view pilot report & findings"
                         >
                           {loc.code}
                         </span>
@@ -1061,6 +1051,24 @@ export const DashboardOverviewScreen: React.FC<DashboardOverviewScreenProps> = (
             </div>
           </div>
         </div>
+      )}
+      {/* POPUP PILOT REPORT MODAL */}
+      {selectedModalLocation && (
+        <PilotLocationReportModal
+          locationId={selectedModalLocation.id}
+          facilityCode={selectedModalLocation.code}
+          typeLabel={selectedModalLocation.typeLabel}
+          domain={selectedModalLocation.domain}
+          districtName={selectedModalLocation.districtName}
+          blockName={selectedModalLocation.blockName}
+          initialStatus={selectedModalLocation.status}
+          onClose={() => setSelectedModalLocation(null)}
+          onGoToAudit={(locId) => {
+            setSelectedModalLocation(null);
+            onGoToAudit(locId);
+          }}
+          onAnalysisUpdated={() => loadDashboard(page)}
+        />
       )}
     </div>
   );
