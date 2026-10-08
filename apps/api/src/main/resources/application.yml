@@ -55,6 +55,7 @@ abhisaran:
     bootstrap-admin-id: ${BOOTSTRAP_ADMIN_ID:admin}
     bootstrap-admin-password: ${BOOTSTRAP_ADMIN_PASSWORD:Admin#Bootstrap2026!}
   ai:
-    enabled: ${FEATURE_AI:false}
+    enabled: ${FEATURE_AI:true}
     service-url: ${AI_SERVICE_URL:http://localhost:8000}
-    service-token: ${AI_SERVICE_TOKEN:internal_secret_token_between_spring_and_fastapi_32bytes}
+    service-token: ${AI_SERVICE_TOKEN:abhisaran-internal-ai-token-2026}
+    timeout-ms: ${AI_SERVICE_TIMEOUT_MS:8000}

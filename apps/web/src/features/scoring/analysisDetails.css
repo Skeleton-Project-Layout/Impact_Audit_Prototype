@@ -456,3 +456,106 @@
   line-height: 1.5;
   margin-top: 6px;
 }
+
+/* AI Narrative Assistant Styles */
+.ai-assistant-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.ai-assistant-banner {
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.05) 0%, rgba(99, 102, 241, 0.03) 100%);
+  border: 1px solid rgba(37, 99, 235, 0.2);
+  border-radius: 12px;
+  padding: 18px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.ai-assistant-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ai-disclaimer-box {
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-left: 4px solid #f59e0b;
+  border-radius: 8px;
+  padding: 12px 18px;
+  font-size: 12px;
+  color: #92400e;
+  line-height: 1.5;
+}
+
+.ai-draft-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 22px 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  transition: border-color 0.2s ease;
+}
+
+.ai-draft-card.status-ACCEPTED {
+  border-color: rgba(16, 185, 129, 0.4);
+  box-shadow: 0 1px 4px rgba(16, 185, 129, 0.08);
+}
+
+.ai-draft-card.status-REJECTED {
+  opacity: 0.75;
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.ai-draft-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 12px;
+}
+
+.ai-draft-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.ai-draft-body {
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 16px 20px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ink);
+}
+
+.ai-meta-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  font-size: 11px;
+  font-family: ui-monospace, monospace;
+  color: var(--muted);
+}
+

@@ -72,6 +72,20 @@ export interface AnalysisRunDTO {
   sections: SectionScoreDTO[];
 }
 
+export interface AiDraftDTO {
+  id: string;
+  targetType: string;
+  targetId: string;
+  serviceId: string;
+  outputText: string;
+  qualityMetadata: string | null;
+  status: 'DRAFT' | 'ACCEPTED' | 'REJECTED';
+  acceptedById: string | null;
+  acceptedByUsername: string | null;
+  acceptedAt: string | null;
+  createdAt: string;
+}
+
 interface AnalysisDetailsViewProps {
   locationId?: string;
   runId?: string;
@@ -91,8 +105,15 @@ export const AnalysisDetailsView: React.FC<AnalysisDetailsViewProps> = ({
   const [loading, setLoading] = useState<boolean>(true);
   const [reanalysing, setReanalysing] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'ledger' | 'redflags' | 'sections' | 'items'>('ledger');
+  const [activeTab, setActiveTab] = useState<'ledger' | 'redflags' | 'sections' | 'items' | 'ai_narrative'>('ledger');
   const [showPdfReport, setShowPdfReport] = useState<boolean>(false);
+  const [drafts, setDrafts] = useState<AiDraftDTO[]>([]);
+  const [loadingDrafts, setLoadingDrafts] = useState<boolean>(false);
+  const [generatingDraft, setGeneratingDraft] = useState<boolean>(false);
+  const [draftActionId, setDraftActionId] = useState<string | null>(null);
+  const [copiedDraftId, setCopiedDraftId] = useState<string | null>(null);
+  const [draftError, setDraftError] = useState<string | null>(null);
+  const [aiStatus, setAiStatus] = useState<{ enabled: boolean; serviceStatus: string; serviceUrl: string; version: string } | null>(null);
 
   useEffect(() => {
     if ((isOfficerView && runId) || locationId) {
@@ -101,6 +122,31 @@ export const AnalysisDetailsView: React.FC<AnalysisDetailsViewProps> = ({
       setLoading(false);
     }
   }, [locationId, runId, isOfficerView]);
+
+  const loadAiDrafts = async (runIdToFetch: string) => {
+    try {
+      setLoadingDrafts(true);
+      try {
+        const sRes = await fetch('/api/v1/ai/status');
+        if (sRes.ok) {
+          const sData = await sRes.json();
+          setAiStatus(sData);
+        }
+      } catch (e) {
+        console.warn('AI status check failed', e);
+      }
+
+      const dRes = await fetch(`/api/v1/ai/drafts/ANALYSIS_RUN/${runIdToFetch}`);
+      if (dRes.ok) {
+        const dData = await dRes.json();
+        setDrafts(dData);
+      }
+    } catch (e: any) {
+      console.warn('Failed to load AI drafts', e);
+    } finally {
+      setLoadingDrafts(false);
+    }
+  };
 
   const loadAnalysis = async () => {
     try {
@@ -133,6 +179,9 @@ export const AnalysisDetailsView: React.FC<AnalysisDetailsViewProps> = ({
 
       const data: AnalysisRunDTO = await res.json();
       setAnalysis(data);
+      if (!isOfficerView && data.id) {
+        loadAiDrafts(data.id);
+      }
     } catch (err: any) {
       setError(err.message || 'Unable to retrieve analysis details');
     } finally {
@@ -157,12 +206,143 @@ export const AnalysisDetailsView: React.FC<AnalysisDetailsViewProps> = ({
 
       const data: AnalysisRunDTO = await res.json();
       setAnalysis(data);
+      if (data.id) {
+        loadAiDrafts(data.id);
+      }
     } catch (err: any) {
       setError(err.message || 'Failed to trigger location analysis');
     } finally {
       setReanalysing(false);
       setLoading(false);
     }
+  };
+
+  const handleGenerateDraft = async () => {
+    if (!analysis?.id) return;
+    try {
+      setGeneratingDraft(true);
+      setDraftError(null);
+      const res = await fetch(`/api/v1/ai/summarise-run/${analysis.id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      if (!res.ok) {
+        const body = await res.text();
+        throw new Error(body || `Draft generation failed: ${res.statusText}`);
+      }
+      const newDraft: AiDraftDTO = await res.json();
+      setDrafts((prev) => [newDraft, ...prev.filter((d) => d.id !== newDraft.id)]);
+      setActiveTab('ai_narrative');
+    } catch (err: any) {
+      setDraftError(err.message || 'Failed to generate AI narrative draft');
+    } finally {
+      setGeneratingDraft(false);
+    }
+  };
+
+  const handleAcceptDraft = async (draftId: string) => {
+    try {
+      setDraftActionId(draftId);
+      setDraftError(null);
+      const res = await fetch(`/api/v1/ai/drafts/${draftId}/accept`, {
+        method: 'POST'
+      });
+      if (!res.ok) {
+        const body = await res.text();
+        throw new Error(body || `Failed to accept draft: ${res.statusText}`);
+      }
+      const updated: AiDraftDTO = await res.json();
+      setDrafts((prev) => prev.map((d) => (d.id === draftId ? updated : d)));
+    } catch (err: any) {
+      setDraftError(err.message || 'Failed to accept draft');
+    } finally {
+      setDraftActionId(null);
+    }
+  };
+
+  const handleRejectDraft = async (draftId: string) => {
+    try {
+      setDraftActionId(draftId);
+      setDraftError(null);
+      const res = await fetch(`/api/v1/ai/drafts/${draftId}/reject`, {
+        method: 'POST'
+      });
+      if (!res.ok) {
+        const body = await res.text();
+        throw new Error(body || `Failed to reject draft: ${res.statusText}`);
+      }
+      const updated: AiDraftDTO = await res.json();
+      setDrafts((prev) => prev.map((d) => (d.id === draftId ? updated : d)));
+    } catch (err: any) {
+      setDraftError(err.message || 'Failed to reject draft');
+    } finally {
+      setDraftActionId(null);
+    }
+  };
+
+  const handleCopyDraft = (draft: AiDraftDTO) => {
+    navigator.clipboard.writeText(draft.outputText);
+    setCopiedDraftId(draft.id);
+    setTimeout(() => {
+      setCopiedDraftId(null);
+    }, 2500);
+  };
+
+  const renderFormattedNarrative = (text: string) => {
+    const lines = text.split('\n');
+    return lines.map((line, idx) => {
+      const trimmed = line.trim();
+      if (!trimmed) {
+        return <div key={idx} style={{ height: '8px' }} />;
+      }
+      if (trimmed.startsWith('### ')) {
+        return (
+          <h4 key={idx} style={{ fontSize: '15px', fontWeight: 700, margin: '14px 0 6px 0', color: 'var(--ink)' }}>
+            {trimmed.replace('### ', '')}
+          </h4>
+        );
+      }
+      if (trimmed.startsWith('> ')) {
+        return (
+          <blockquote
+            key={idx}
+            style={{
+              margin: '12px 0',
+              padding: '10px 14px',
+              borderLeft: '3px solid var(--accent)',
+              background: 'rgba(37, 99, 235, 0.04)',
+              borderRadius: '0 8px 8px 0',
+              fontSize: '12px',
+              color: 'var(--muted)',
+              fontStyle: 'italic'
+            }}
+          >
+            {trimmed.replace('> ', '')}
+          </blockquote>
+        );
+      }
+      const parts = trimmed.split(/(\*\*.*?\*\*)/g);
+      const formattedParts = parts.map((part, pIdx) => {
+        if (part.startsWith('**') && part.endsWith('**')) {
+          return <strong key={pIdx}>{part.slice(2, -2)}</strong>;
+        }
+        return part;
+      });
+
+      if (/^\d+\.\s/.test(trimmed)) {
+        return (
+          <div key={idx} style={{ paddingLeft: '16px', margin: '4px 0', fontSize: '13px', lineHeight: 1.6 }}>
+            {formattedParts}
+          </div>
+        );
+      }
+
+      return (
+        <p key={idx} style={{ margin: '6px 0', fontSize: '13px', lineHeight: 1.6, color: 'var(--ink)' }}>
+          {formattedParts}
+        </p>
+      );
+    });
   };
 
   const getBandLabel = (band: string | null) => {
@@ -287,6 +467,21 @@ export const AnalysisDetailsView: React.FC<AnalysisDetailsViewProps> = ({
         </div>
 
         <div className="analysis-header-actions">
+          {!isOfficerView && (
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => {
+                setActiveTab('ai_narrative');
+                if (drafts.length === 0) {
+                  handleGenerateDraft();
+                }
+              }}
+              style={{ fontSize: '13px', padding: '7px 14px', display: 'flex', alignItems: 'center', gap: '6px' }}
+            >
+              <span>🤖</span> AI Narrative {drafts.length > 0 ? `(${drafts.length})` : ''}
+            </button>
+          )}
           <button
             type="button"
             className="btn btn-secondary"
@@ -560,6 +755,28 @@ export const AnalysisDetailsView: React.FC<AnalysisDetailsViewProps> = ({
         >
           📋 All Assessed Questions ({analysis.items.length})
         </button>
+        {!isOfficerView && (
+          <button
+            type="button"
+            className={`tab-btn ${activeTab === 'ai_narrative' ? 'active' : ''}`}
+            onClick={() => setActiveTab('ai_narrative')}
+            style={{
+              padding: '10px 18px',
+              fontSize: '13px',
+              fontWeight: 600,
+              border: 'none',
+              background: 'none',
+              cursor: 'pointer',
+              borderBottom: activeTab === 'ai_narrative' ? '2px solid var(--accent)' : '2px solid transparent',
+              color: activeTab === 'ai_narrative' ? 'var(--accent)' : 'var(--muted)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}
+          >
+            <span>🤖</span> AI Narrative Assistant {drafts.length > 0 && <span style={{ fontSize: '11px', background: 'var(--surface-2)', padding: '1px 6px', borderRadius: '10px' }}>{drafts.length}</span>}
+          </button>
+        )}
       </div>
 
       {/* Tab 1: Deduction Waterfall Ledger */}
@@ -815,6 +1032,244 @@ export const AnalysisDetailsView: React.FC<AnalysisDetailsViewProps> = ({
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* Tab 5: AI Narrative Assistant */}
+      {!isOfficerView && activeTab === 'ai_narrative' && (
+        <div className="ai-assistant-container">
+          {/* Top Banner */}
+          <div className="ai-assistant-banner">
+            <div>
+              <div className="ai-assistant-title">
+                <span>🤖</span> Assistive Executive Narrative Generator
+              </div>
+              <div style={{ fontSize: '13px', color: 'var(--muted)', marginTop: '4px' }}>
+                Generates objective, deduction-ledger grounded diagnostic summaries with actionable interventions.
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              {aiStatus && (
+                <span
+                  style={{
+                    fontSize: '12px',
+                    padding: '4px 10px',
+                    borderRadius: '999px',
+                    fontWeight: 600,
+                    background: aiStatus.serviceStatus === 'UP' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(245, 158, 11, 0.1)',
+                    color: aiStatus.serviceStatus === 'UP' ? '#047857' : '#b45309',
+                    border: '1px solid ' + (aiStatus.serviceStatus === 'UP' ? 'rgba(16, 185, 129, 0.3)' : 'rgba(245, 158, 11, 0.3)')
+                  }}
+                >
+                  ● {aiStatus.serviceStatus === 'UP' ? 'AI Microservice Online' : 'Fallback Engine Ready'}
+                </span>
+              )}
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={handleGenerateDraft}
+                disabled={generatingDraft}
+                style={{ fontSize: '13px', padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '6px' }}
+              >
+                {generatingDraft ? '⚡ Generating Draft...' : '⚡ Generate New Draft'}
+              </button>
+            </div>
+          </div>
+
+          {/* Strict Human-in-the-Loop & Zero-DB Notice */}
+          <div className="ai-disclaimer-box">
+            <div style={{ fontWeight: 700, marginBottom: '2px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span>🔒</span> Architectural Isolation & Human-in-the-Loop Governance Notice
+            </div>
+            <div>
+              The assistive AI service operates in zero-DB isolation with no write paths to database tables. Generated drafts are advisory, segregated in <code>ai_drafts</code>, and <strong>strictly cannot alter the official ACS score, deduction points, or facility status</strong>. Official standing is dictated solely by the deterministic Java ScoringEngine and authorized human review.
+            </div>
+          </div>
+
+          {draftError && (
+            <div style={{ padding: '12px 16px', background: '#fef2f2', border: '1px solid #f87171', borderRadius: '8px', color: '#991b1b', fontSize: '13px' }}>
+              ⚠️ {draftError}
+            </div>
+          )}
+
+          {/* Drafts List */}
+          {loadingDrafts ? (
+            <div style={{ padding: '40px', textAlign: 'center', color: 'var(--muted)' }}>
+              Loading drafts...
+            </div>
+          ) : drafts.length === 0 ? (
+            <div
+              style={{
+                background: 'var(--surface)',
+                border: '1px dashed var(--line)',
+                borderRadius: '12px',
+                padding: '48px 24px',
+                textAlign: 'center',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '12px'
+              }}
+            >
+              <div style={{ fontSize: '36px' }}>🤖</div>
+              <div style={{ fontWeight: 700, fontSize: '16px', color: 'var(--ink)' }}>
+                No narrative summary drafts created yet
+              </div>
+              <div style={{ fontSize: '13px', color: 'var(--muted)', maxWidth: '480px' }}>
+                Click below to synthesize Run #{analysis.runNumber}'s deduction ledger into an objective, non-ranking diagnostic narrative with actionable interventions.
+              </div>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={handleGenerateDraft}
+                disabled={generatingDraft}
+                style={{ marginTop: '8px', fontSize: '13px', padding: '9px 18px' }}
+              >
+                {generatingDraft ? '⚡ Generating Draft...' : '⚡ Generate First AI Draft'}
+              </button>
+            </div>
+          ) : (
+            drafts.map((draft) => {
+              let parsedMeta: any = null;
+              try {
+                if (draft.qualityMetadata) {
+                  parsedMeta = JSON.parse(draft.qualityMetadata);
+                }
+              } catch (_) {}
+
+              return (
+                <div key={draft.id} className={`ai-draft-card status-${draft.status}`}>
+                  <div className="ai-draft-header">
+                    <div className="ai-draft-meta">
+                      <span
+                        style={{
+                          fontWeight: 700,
+                          fontSize: '11px',
+                          padding: '3px 8px',
+                          borderRadius: '4px',
+                          background:
+                            draft.status === 'ACCEPTED'
+                              ? 'rgba(16, 185, 129, 0.15)'
+                              : draft.status === 'REJECTED'
+                              ? 'rgba(239, 68, 68, 0.15)'
+                              : 'rgba(245, 158, 11, 0.15)',
+                          color:
+                            draft.status === 'ACCEPTED'
+                              ? '#047857'
+                              : draft.status === 'REJECTED'
+                              ? '#b91c1c'
+                              : '#b45309',
+                          border:
+                            draft.status === 'ACCEPTED'
+                              ? '1px solid rgba(16, 185, 129, 0.3)'
+                              : draft.status === 'REJECTED'
+                              ? '1px solid rgba(239, 68, 68, 0.3)'
+                              : '1px solid rgba(245, 158, 11, 0.3)'
+                        }}
+                      >
+                        {draft.status === 'ACCEPTED'
+                          ? '✓ ACCEPTED'
+                          : draft.status === 'REJECTED'
+                          ? '✕ REJECTED'
+                          : '⏳ DRAFT (PENDING REVIEW)'}
+                      </span>
+                      <span>•</span>
+                      <span>Service: <code>{draft.serviceId}</code></span>
+                      <span>•</span>
+                      <span>Created {new Date(draft.createdAt).toLocaleString()}</span>
+                      {draft.acceptedAt && (
+                        <>
+                          <span>•</span>
+                          <span style={{ fontStyle: 'italic' }}>
+                            {draft.status === 'ACCEPTED' ? 'Accepted' : 'Rejected'} by {draft.acceptedByUsername || 'Admin'} on {new Date(draft.acceptedAt).toLocaleString()}
+                          </span>
+                        </>
+                      )}
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <button
+                        type="button"
+                        className="btn btn-secondary"
+                        onClick={() => handleCopyDraft(draft)}
+                        style={{ fontSize: '12px', padding: '5px 12px' }}
+                      >
+                        {copiedDraftId === draft.id ? '✓ Copied!' : '📋 Copy Text'}
+                      </button>
+                      {draft.status === 'DRAFT' && (
+                        <>
+                          <button
+                            type="button"
+                            className="btn btn-secondary"
+                            onClick={() => handleRejectDraft(draft.id)}
+                            disabled={draftActionId === draft.id}
+                            style={{
+                              fontSize: '12px',
+                              padding: '5px 12px',
+                              borderColor: '#fca5a5',
+                              color: '#b91c1c'
+                            }}
+                          >
+                            ✕ Reject
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn-primary"
+                            onClick={() => handleAcceptDraft(draft.id)}
+                            disabled={draftActionId === draft.id}
+                            style={{
+                              fontSize: '12px',
+                              padding: '5px 12px',
+                              background: '#059669',
+                              borderColor: '#059669'
+                            }}
+                          >
+                            ✓ Accept Draft
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Quality Metadata Tags */}
+                  {parsedMeta && (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                      {parsedMeta.grounding_source && (
+                        <span className="ai-meta-tag">
+                          📊 Grounding: {parsedMeta.grounding_source}
+                        </span>
+                      )}
+                      {parsedMeta.hallucination_index !== undefined && (
+                        <span className="ai-meta-tag">
+                          🛡️ Hallucination Index: {parsedMeta.hallucination_index}
+                        </span>
+                      )}
+                      {parsedMeta.word_count && (
+                        <span className="ai-meta-tag">
+                          📝 {parsedMeta.word_count} words
+                        </span>
+                      )}
+                      {parsedMeta.red_flags_referenced !== undefined && (
+                        <span className="ai-meta-tag">
+                          🚨 {parsedMeta.red_flags_referenced} red flag(s)
+                        </span>
+                      )}
+                      {parsedMeta.is_fallback && (
+                        <span className="ai-meta-tag" style={{ color: '#b45309' }}>
+                          ⚡ Generated by Offline Resilient Fallback Engine
+                        </span>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Formatted Narrative Output */}
+                  <div className="ai-draft-body">
+                    {renderFormattedNarrative(draft.outputText)}
+                  </div>
+                </div>
+              );
+            })
+          )}
         </div>
       )}
     </div>
