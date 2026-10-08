@@ -1,0 +1,1474 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ABHISARAN Field Form</title>
+<style>
+/* Layout: sticky header + record tabs; desktop = section sidebar + one-section form; mobile = single column with jump-to-section select and a fixed bottom bar */
+:root {
+  --bg: #eef2f0;
+  --surface: #ffffff;
+  --surface-2: #f6f9f8;
+  --ink: #15231f;
+  --muted: #566863;
+  --line: #d3dcd8;
+  --accent: #0b6b5c;
+  --accent-ink: #ffffff;
+  --accent-soft: #dff0ec;
+  --danger: #b3261e;
+  --danger-soft: #fbe9e7;
+  --ok: #17703f;
+  --warn: #8a5a00;
+  --warn-soft: #fff4d6;
+  --shadow: 0 1px 2px rgba(10, 30, 25, .06), 0 6px 20px rgba(10, 30, 25, .06);
+  --font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --hdr: 56px;
+  --strip: 112px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1513; --surface: #16211e; --surface-2: #1b2824; --ink: #e5eeeb; --muted: #94a7a1; --line: #2b3b36;
+    --accent: #3fb8a2; --accent-ink: #04201a; --accent-soft: #1b3a34; --danger: #ff8a80; --danger-soft: #3a1d1b;
+    --ok: #66d19a; --warn: #f2c14e; --warn-soft: #3a2f10; --shadow: 0 1px 2px rgba(0, 0, 0, .4);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1513; --surface: #16211e; --surface-2: #1b2824; --ink: #e5eeeb; --muted: #94a7a1; --line: #2b3b36;
+  --accent: #3fb8a2; --accent-ink: #04201a; --accent-soft: #1b3a34; --danger: #ff8a80; --danger-soft: #3a1d1b;
+  --ok: #66d19a; --warn: #f2c14e; --warn-soft: #3a2f10; --shadow: 0 1px 2px rgba(0, 0, 0, .4);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } * { transition: none !important; animation: none !important; } }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.45 var(--font); padding-bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
+button, input, textarea, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+[hidden] { display: none !important; }
+h1, h2, h3, p { margin: 0; }
+
+/* ---------- header ---------- */
+.hdr { position: sticky; top: 0; z-index: 40; height: calc(var(--hdr) + env(safe-area-inset-top, 0px)); padding: env(safe-area-inset-top, 0px) 16px 0; background: var(--surface); border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.brand { min-width: 0; display: flex; flex-direction: column; line-height: 1.15; }
+.brand b { font-size: 17px; letter-spacing: .09em; color: var(--accent); }
+.brand span { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hdr-actions { display: flex; align-items: center; gap: 8px; flex: none; }
+.status { font-size: 12px; color: var(--muted); display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.status::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--ok); }
+.status.saving::before { background: var(--warn); }
+.status.error { color: var(--danger); font-weight: 600; }
+.status.error::before { background: var(--danger); }
+.pop { position: relative; }
+.menu { position: absolute; right: 0; top: calc(100% + 6px); z-index: 60; min-width: 250px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow); padding: 6px; display: flex; flex-direction: column; }
+.menu button { text-align: left; background: none; border: 0; border-radius: 8px; padding: 12px 12px; min-height: 44px; }
+.menu button:hover { background: var(--surface-2); }
+.menu button small { display: block; color: var(--muted); font-size: 12px; }
+.menu hr { border: 0; border-top: 1px solid var(--line); margin: 4px 0; width: 100%; }
+.menu .danger { color: var(--danger); }
+
+.btn { min-height: 44px; padding: 0 16px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 8px; white-space: nowrap; }
+.btn:hover { background: var(--surface-2); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn.primary:hover { filter: brightness(1.08); background: var(--accent); }
+.btn.danger { background: var(--danger); border-color: var(--danger); color: #fff; }
+.btn.danger:disabled { opacity: .4; cursor: not-allowed; }
+.btn.icon { width: 44px; padding: 0; font-size: 20px; line-height: 1; }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.btn svg { width: 18px; height: 18px; flex: none; }
+
+.banner { background: var(--danger-soft); color: var(--danger); padding: 10px 16px; font-size: 14px; border-bottom: 1px solid var(--line); }
+
+/* ---------- shell ---------- */
+.shell { max-width: 1200px; margin: 0 auto; padding: 16px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+main { min-width: 0; display: flex; flex-direction: column; gap: 14px; }
+.side { display: none; }
+
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+
+/* record tabs */
+.recbar { display: flex; gap: 10px; align-items: stretch; }
+.tabs { display: flex; gap: 8px; overflow-x: auto; flex: 1; min-width: 0; padding-bottom: 4px; scrollbar-width: thin; }
+.tab { flex: none; max-width: 220px; min-height: 44px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tab[aria-current="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.recbar .add { flex: none; border-style: dashed; border-color: var(--accent); color: var(--accent); }
+
+/* record header */
+.rechead { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+.rechead h1 { font-size: 15px; letter-spacing: .02em; line-height: 1.3; text-wrap: balance; }
+.rechead .pilot { color: var(--muted); font-size: 14px; margin-top: 2px; }
+.rechead-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+.recbadge { background: var(--accent-soft); color: var(--accent); font-weight: 700; border-radius: 999px; padding: 6px 14px; font-size: 13px; white-space: nowrap; }
+.rechead-fields { display: flex; flex-wrap: wrap; gap: 12px; }
+.rechead-fields .fld { flex: 1 1 160px; }
+.rechead-fields .fld.grow { flex: 2 1 240px; }
+
+/* search */
+.searchbox { position: relative; }
+.searchbox input[type="text"] { width: 100%; min-height: 46px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); padding: 0 14px 0 40px; }
+.searchbox svg { position: absolute; left: 13px; top: 14px; width: 18px; height: 18px; color: var(--muted); pointer-events: none; }
+.results { position: absolute; left: 0; right: 0; top: calc(100% + 6px); z-index: 35; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow); padding: 6px; max-height: 60vh; overflow: auto; }
+.results button { display: flex; gap: 10px; width: 100%; text-align: left; background: none; border: 0; border-radius: 8px; padding: 10px; min-height: 44px; align-items: baseline; }
+.results button:hover { background: var(--surface-2); }
+.results b { color: var(--accent); min-width: 34px; flex: none; }
+.results small { color: var(--muted); margin-left: auto; padding-left: 8px; white-space: nowrap; }
+.results .none { padding: 12px; color: var(--muted); }
+
+/* progress strip */
+.strip { position: sticky; top: calc(var(--hdr) + env(safe-area-inset-top, 0px)); z-index: 30; background: var(--bg); padding: 8px 0 8px; display: flex; flex-direction: column; gap: 8px; }
+.strip-row { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; font-size: 14px; }
+.strip-row b { font-variant-numeric: tabular-nums; }
+.strip-row span { color: var(--muted); font-variant-numeric: tabular-nums; }
+.bar { height: 8px; border-radius: 99px; background: var(--line); overflow: hidden; }
+.bar i { display: block; height: 100%; background: var(--accent); width: 0; transition: width .25s; }
+.jump { width: 100%; min-height: 44px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); padding: 0 12px; }
+
+/* section head */
+.sechead { scroll-margin-top: calc(var(--hdr) + var(--strip) + 8px); display: flex; justify-content: space-between; gap: 12px; align-items: center; flex-wrap: wrap; }
+.sechead h2 { font-size: 17px; letter-spacing: .03em; color: var(--accent); text-wrap: balance; }
+.sechead span { font-size: 13px; color: var(--muted); }
+
+/* questions */
+#form { display: flex; flex-direction: column; gap: 12px; }
+.qcard { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px; scroll-margin-top: calc(var(--hdr) + var(--strip) + 12px); display: flex; flex-direction: column; gap: 14px; }
+.qcard.flash { animation: flash 1.6s ease-out; }
+@keyframes flash { 0% { box-shadow: 0 0 0 4px var(--accent); } 100% { box-shadow: 0 0 0 4px transparent; } }
+.qhead { display: flex; gap: 12px; align-items: flex-start; }
+.qnum { flex: none; min-width: 38px; height: 30px; padding: 0 8px; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; background: var(--accent-soft); color: var(--accent); font-weight: 800; font-variant-numeric: tabular-nums; }
+.qcard.done .qnum { background: var(--accent); color: var(--accent-ink); }
+.qtext { font-size: 16px; font-weight: 650; line-height: 1.3; padding-top: 3px; text-wrap: balance; }
+.qhint { color: var(--muted); font-size: 13px; margin-top: 2px; font-style: italic; }
+.qbody { display: flex; flex-wrap: wrap; gap: 12px; }
+
+.fld { display: flex; flex-direction: column; gap: 6px; flex: 1 1 130px; min-width: 0; }
+.fld.wide { flex-basis: 240px; }
+.fld.full { flex-basis: 100%; }
+.lbl, .fld > label { font-size: 13px; font-weight: 600; color: var(--muted); }
+input[type="text"], input[type="date"], textarea, .nt input { width: 100%; min-height: 46px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-2); padding: 10px 12px; font-size: 16px; }
+input[type="text"]:focus, input[type="date"]:focus, textarea:focus, .nt input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); background: var(--surface); }
+textarea { resize: vertical; line-height: 1.45; overflow: hidden; min-height: 92px; }
+textarea.small { min-height: 66px; }
+input[inputmode] { font-variant-numeric: tabular-nums; }
+
+.seg { display: flex; flex-wrap: wrap; gap: 8px; }
+.opt { min-height: 44px; padding: 0 18px; border-radius: 10px; border: 1.5px solid var(--line); background: var(--surface-2); font-weight: 600; }
+.opt:hover { border-color: var(--accent); }
+.opt[aria-checked="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.opt.chip[aria-checked="true"]::before { content: "\2713\00a0"; }
+
+.grid-rows { display: flex; flex-direction: column; gap: 10px; }
+.grow-row { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-2); }
+.grow-row .gl { flex: 1 1 130px; font-weight: 650; }
+.gcols { display: flex; flex-wrap: wrap; gap: 8px 16px; }
+.gcol { display: flex; align-items: center; gap: 8px; }
+.gcol .lbl { min-width: 70px; }
+.gcol .opt { min-height: 40px; padding: 0 14px; }
+
+.tbl-wrap { overflow-x: auto; }
+.nt { border-collapse: separate; border-spacing: 0 8px; width: 100%; min-width: 280px; }
+.nt th { text-align: left; font-size: 13px; color: var(--muted); font-weight: 600; padding: 0 8px 0 0; }
+.nt thead th { padding-bottom: 0; }
+.nt td { padding: 0 8px 0 0; width: 34%; }
+.note { font-size: 13px; color: var(--warn); background: var(--warn-soft); border-radius: 8px; padding: 8px 10px; }
+
+/* sidebar */
+.nav-item { width: 100%; text-align: left; display: flex; flex-direction: column; gap: 2px; padding: 11px 12px; min-height: 52px; border: 1px solid transparent; border-radius: 10px; background: none; }
+.nav-item:hover { background: var(--surface-2); }
+.nav-item.on { background: var(--accent-soft); border-color: var(--accent); }
+.nav-item .nl { font-weight: 650; }
+.nav-item .ns { font-size: 12px; color: var(--muted); }
+.nav-item .ns.ok { color: var(--ok); font-weight: 700; }
+.side-card { padding: 10px; display: flex; flex-direction: column; gap: 4px; }
+.side-card h3 { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding: 6px 12px; }
+.side-actions { padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+
+/* bottom bar */
+.bottombar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 45; background: var(--surface); border-top: 1px solid var(--line); padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px)); display: flex; justify-content: center; }
+.bb-in { width: 100%; max-width: 1168px; display: flex; gap: 10px; align-items: center; }
+.bb-in .btn { flex: 1; }
+.bb-in .btn.primary { flex: 1.3; }
+#bbInfo { display: none; color: var(--muted); font-size: 13px; flex: 2; text-align: center; }
+
+/* modal + toast */
+.scrim { position: fixed; inset: 0; z-index: 90; background: rgba(5, 15, 12, .55); display: flex; align-items: center; justify-content: center; padding: 16px; }
+.dlg { width: 100%; max-width: 460px; max-height: 90vh; overflow: auto; background: var(--surface); border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 14px; box-shadow: var(--shadow); }
+.dlg h2 { font-size: 18px; }
+.dlg p { color: var(--muted); }
+.dlg input[type="text"] { background: var(--surface-2); }
+.acts { display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-end; }
+.acts .btn { flex: 1 1 auto; }
+#toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(92px + env(safe-area-inset-bottom, 0px)); z-index: 95; background: var(--ink); color: var(--bg); padding: 12px 18px; border-radius: 12px; max-width: min(92vw, 520px); font-size: 14px; box-shadow: var(--shadow); text-align: center; }
+
+@media (min-width: 640px) {
+  .brand span { font-size: 13px; }
+  .qcard { padding: 20px; }
+  #bbInfo { display: block; }
+}
+@media (min-width: 960px) {
+  :root { --strip: 58px; }
+  .shell { grid-template-columns: 290px minmax(0, 1fr); align-items: start; padding: 20px; gap: 20px; }
+  .side { display: flex; flex-direction: column; gap: 14px; position: sticky; top: calc(var(--hdr) + 20px + env(safe-area-inset-top, 0px)); max-height: calc(100vh - var(--hdr) - 40px); overflow: auto; }
+  .jump { display: none; }
+  .strip { padding-top: 0; }
+}
+@media (max-width: 420px) {
+  .status span.t { display: none; }
+  .btn.primary .lab-long { display: none; }
+  .brand span { display: none; }
+}
+
+.status.error span.t { display: inline !important; }
+</style>
+</head>
+<body>
+
+<header class="hdr">
+  <div class="brand"><b>ABHISARAN</b><span>Village Baseline &amp; Impact Assessment · East Khasi Hills Pilot</span></div>
+  <div class="hdr-actions">
+    <button type="button" data-act="pdf-current" class="btn primary" style="background: linear-gradient(135deg, #10b981, #059669); color: #ffffff; border: 1px solid rgba(255,255,255,0.2); font-weight: 700; margin-right: 0.4rem; display: inline-flex; align-items: center; gap: 0.35rem; box-shadow: 0 2px 4px rgba(0,0,0,0.15);">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><path d="M12 3v12m0 0l-5-5m5 5l5-5M4 21h16"/></svg>
+      <span>⚡ Send &amp; Attach PDF to /source</span>
+    </button>
+    <span id="saveStatus" class="status" role="status"><span class="t">Saved</span></span>
+    <div class="pop">
+      <button id="pdfBtn" class="btn primary" aria-haspopup="true" aria-expanded="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0l-5-5m5 5l5-5M4 21h16"/></svg>
+        <span><span class="lab-long">Download </span>PDF</span>
+      </button>
+      <div class="menu" id="pdfMenu" hidden>
+        <button data-act="pdf-current">Download Current Record<small id="pdfCurSub"></small></button>
+        <button data-act="pdf-all">Download All as One PDF<small id="pdfAllSub"></small></button>
+      </div>
+    </div>
+    <div class="pop">
+      <button id="moreBtn" class="btn icon" aria-label="More actions" aria-haspopup="true" aria-expanded="false">&#8943;</button>
+      <div class="menu" id="moreMenu" hidden>
+        <button data-act="add">+ Add New Page / Village</button>
+        <button data-act="duplicate">Duplicate Current Record<small>Creates a new, independent copy</small></button>
+        <hr>
+        <button data-act="export">Export Data<small>Download a JSON backup</small></button>
+        <button data-act="import">Import Data<small>Restore from a JSON backup</small></button>
+        <hr>
+        <button data-act="delete" class="danger">Delete This Record</button>
+        <button data-act="clear" class="danger">Clear Current Record</button>
+        <button data-act="clearall" class="danger">Clear All Records</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div id="banner" class="banner" hidden>Automatic saving is not available in this browser (private mode or blocked storage). Use <b>Export Data</b> often to keep a backup.</div>
+
+<div class="shell">
+  <aside class="side" aria-label="Sections">
+    <div class="card side-card">
+      <h3>Sections</h3>
+      <div id="navList"></div>
+    </div>
+    <div class="card side-actions">
+      <button class="btn primary" data-act="pdf-current">Download Current Record</button>
+      <button class="btn" data-act="pdf-all">Download All as One PDF</button>
+      <button class="btn" data-act="duplicate">Duplicate Current Record</button>
+      <button class="btn" data-act="export">Export Data (JSON)</button>
+      <button class="btn" data-act="import">Import Data</button>
+    </div>
+  </aside>
+
+  <main>
+    <section class="recbar" aria-label="Village records">
+      <div class="tabs" id="tabs" role="tablist"></div>
+      <button class="btn add" id="addBtn" data-act="add">+ Add New Page</button>
+    </section>
+
+    <section class="card rechead" aria-label="Record header">
+      <div class="rechead-top">
+        <div>
+          <h1>ABHISARAN – VILLAGE BASELINE &amp; IMPACT ASSESSMENT FIELD FORM</h1>
+          <p class="pilot">East Khasi Hills Pilot</p>
+        </div>
+        <span class="recbadge" id="recBadge">Village Record 1 of 1</span>
+      </div>
+      <div class="rechead-fields">
+        <div class="fld"><label for="hdrDate">Date</label><input type="date" id="hdrDate"></div>
+        <div class="fld grow"><label for="hdrVillage">Village</label><input type="text" id="hdrVillage" autocomplete="off" placeholder="Village name"></div>
+      </div>
+    </section>
+
+    <div class="searchbox">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input type="text" id="search" placeholder="Search questions (word or number)" aria-label="Search questions" autocomplete="off">
+      <div class="results" id="results" hidden></div>
+    </div>
+
+    <div class="strip" id="strip">
+      <div class="strip-row"><b id="stripQ">Question 1 of 67</b><span id="stripPct">0% complete</span></div>
+      <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" id="bar"><i id="barFill"></i></div>
+      <select class="jump" id="jump" aria-label="Jump to section"></select>
+    </div>
+
+    <div class="sechead" id="secHead"></div>
+    <form id="form" onsubmit="return false" novalidate></form>
+  </main>
+</div>
+
+<nav class="bottombar" aria-label="Form navigation">
+  <div class="bb-in">
+    <button class="btn" id="prevBtn">&#8249; Previous</button>
+    <span id="bbInfo"></span>
+    <button class="btn primary" id="saveBtn">Save</button>
+    <button class="btn" id="nextBtn">Next &#8250;</button>
+  </div>
+</nav>
+
+<div id="toast" role="status" hidden></div>
+<div id="modal" hidden></div>
+<input type="file" id="importFile" accept=".json,application/json" hidden>
+
+<script>
+/* ABHISARAN – Village Baseline & Impact Assessment Field Form (Page 1 only: Q1–Q67) */
+
+const SECTIONS = [
+  { id: 'A', short: 'Village & Community', title: 'A. VILLAGE & COMMUNITY PROFILE' },
+  { id: 'B', short: 'School', title: 'B. SCHOOL – HEAD TEACHER / PRINCIPAL' },
+  { id: 'C', short: 'Anganwadi', title: 'C. ANGANWADI – AWW' },
+  { id: 'D', short: 'Health Facility', title: 'D. PHC / HEALTH FACILITY – MEDICAL OFFICER / STAFF' },
+  { id: 'E', short: 'Community', title: 'E. COMMUNITY / HOUSEHOLD INTERACTION' },
+  { id: 'F', short: 'Physical Verification', title: 'F. PHYSICAL VERIFICATION – FIELD TEAM' },
+  { id: 'G', short: 'Quick Summary', title: 'G. ABHISARAN BASELINE – QUICK SUMMARY' }
+];
+
+/* field builders */
+const T = (k, label, o = {}) => ({ k, label, type: 'text', ...o });
+const N = (k, label, o = {}) => ({ k, label, type: 'number', ...o });
+const A = (k, label, o = {}) => ({ k, label, type: 'area', ...o });
+const R = (k, label, opts, o = {}) => ({ k, label, type: 'radio', opts, ...o });
+const C = (k, label, opts, o = {}) => ({ k, label, type: 'check', opts, ...o });
+const G = (k, rows, cols) => ({ k, type: 'grid', rows, cols });
+const NT = (k, rows, cols) => ({ k, type: 'numtable', rows, cols });
+const YN = ['Yes', 'No'];
+const Q = (n, s, text, hint, fields) => ({ n, s, text, hint, fields });
+const three = (p) => [T('i1', p + ' 1'), T('i2', p + ' 2'), T('i3', p + ' 3')];
+const AVF = [{ k: 'avail', label: 'Available' }, { k: 'func', label: 'Functional' }];
+const AVFU = [...AVF, { k: 'used', label: 'Used' }];
+
+const QUESTIONS = [
+  /* ---------- A. VILLAGE & COMMUNITY PROFILE ---------- */
+  Q(1, 0, 'Village name / locality?', 'Basic identification', [
+    T('village', 'Village name', { wide: true, sync: 'village' }), T('locality', 'Locality', { wide: true })]),
+  Q(2, 0, 'Approx. population / households?', 'Ask village head / official record', [
+    N('population', 'Approx. population'), N('households', 'Approx. households')]),
+  Q(3, 0, 'What are the 3 biggest issues affecting the village?', 'Open-ended', three('Issue').map(f => ({ ...f, wide: true }))),
+  Q(4, 0, 'Which government services are most used here?', 'Education / health / nutrition / welfare', [
+    C('services', 'Most used services', ['Education', 'Health', 'Nutrition', 'Welfare']),
+    A('notes', 'Details / other services')]),
+  Q(5, 0, 'Which important services are difficult to access?', 'Ask why', [
+    A('notes', 'Services and reasons')]),
+  Q(6, 0, 'Are there seasonal problems affecting families?', 'Weather, transport, livelihood, etc.', [
+    R('seasonal', 'Seasonal problems?', YN), A('details', 'Details')]),
+  Q(7, 0, 'Which groups need the most support?', 'Children, women, elderly, vulnerable households, etc.', [
+    C('groups', 'Groups', ['Children', 'Women', 'Elderly', 'Vulnerable households', 'Other']),
+    A('notes', 'Details')]),
+
+  /* ---------- B. SCHOOL ---------- */
+  Q(8, 1, 'School name & UDISE+ Code?', 'Record exactly', [
+    T('name', 'School name', { wide: true }), T('udise', 'UDISE+ Code', { wide: true })]),
+  Q(9, 1, 'Classes covered?', 'e.g. I–VIII / I–XII', [
+    T('classes', 'Classes covered', { wide: true, ph: 'e.g. I–VIII' })]),
+  Q(10, 1, 'Total enrolment? Boys / Girls?', 'Current official record', [
+    N('total', 'Total enrolment'), N('boys', 'Boys'), N('girls', 'Girls')]),
+  Q(11, 1, 'Teachers sanctioned / working?', 'Record numbers', [
+    N('sanctioned', 'Sanctioned'), N('working', 'Working')]),
+  Q(12, 1, 'Average attendance?', 'Recent monthly figure if available', [
+    N('attendance', 'Average attendance (%)', { dec: true, max: 100 }), T('period', 'Month / period of figure', { wide: true })]),
+  Q(13, 1, 'Students frequently absent / at risk of dropping out?', 'Number + main reasons', [
+    N('number', 'Number of students'), A('reasons', 'Main reasons')]),
+  Q(14, 1, 'Current learning concerns?', 'Reading, numeracy, language, subjects', [
+    C('areas', 'Areas of concern', ['Reading', 'Numeracy', 'Language', 'Subjects']),
+    A('details', 'Details (which subjects, classes)')]),
+  Q(15, 1, 'Students needing remedial / additional support?', 'Number, if available', [
+    N('number', 'Number of students')]),
+  Q(16, 1, 'CWSN / children requiring special support?', 'Number, if officially recorded', [
+    N('number', 'Number of children')]),
+  Q(17, 1, 'Drinking water available and functional?', 'Available / Functional / Used', [
+    G('g', [{ k: 'water', label: 'Drinking water' }], AVFU), A('remarks', 'Remarks')]),
+  Q(18, 1, 'Toilets available and functional?', 'Boys / Girls / CWSN', [
+    G('g', [{ k: 'boys', label: 'Boys' }, { k: 'girls', label: 'Girls' }, { k: 'cwsn', label: 'CWSN' }], AVF),
+    A('remarks', 'Remarks')]),
+  Q(19, 1, 'Electricity / internet / digital facilities?', 'Available / Functional / Used', [
+    G('g', [{ k: 'elec', label: 'Electricity' }, { k: 'net', label: 'Internet' }, { k: 'digital', label: 'Digital facilities' }], AVFU),
+    A('remarks', 'Remarks')]),
+  Q(20, 1, 'Library / laboratory / playground / classroom adequacy?', 'Brief condition', [
+    T('library', 'Library', { wide: true, ph: 'Brief condition' }),
+    T('lab', 'Laboratory', { wide: true, ph: 'Brief condition' }),
+    T('playground', 'Playground', { wide: true, ph: 'Brief condition' }),
+    T('classroom', 'Classrooms', { wide: true, ph: 'Brief condition' })]),
+  Q(21, 1, "What are the school's 3 biggest gaps?", 'Open-ended', three('Gap').map(f => ({ ...f, wide: true }))),
+  Q(22, 1, 'What support would make the biggest difference?', 'Open-ended', [A('notes', 'Answer')]),
+
+  /* ---------- C. ANGANWADI ---------- */
+  Q(23, 2, 'Anganwadi name / centre code?', 'Record exactly', [
+    T('name', 'Anganwadi name', { wide: true }), T('code', 'Centre code', { wide: true })]),
+  Q(24, 2, 'Number of registered children? Boys / Girls?', 'Current register', [
+    N('total', 'Registered children'), N('boys', 'Boys'), N('girls', 'Girls')]),
+  Q(25, 2, 'Number of children attending regularly?', 'If available', [
+    N('number', 'Number of children')]),
+  Q(26, 2, 'Pregnant women / lactating mothers registered?', 'Numbers', [
+    N('pregnant', 'Pregnant women'), N('lactating', 'Lactating mothers')]),
+  Q(27, 2, 'Nutrition / supplementary food provided regularly?', 'Yes / No + issues', [
+    R('regular', 'Provided regularly?', YN), A('issues', 'Issues')]),
+  Q(28, 2, 'Growth monitoring done regularly?', 'Yes / No + frequency', [
+    R('regular', 'Done regularly?', YN), T('frequency', 'Frequency', { wide: true })]),
+  Q(29, 2, 'Children identified as nutritionally vulnerable?', 'Use aggregate official records', [
+    N('number', 'Number of children'), A('notes', 'Notes')]),
+  Q(30, 2, 'Preschool / early learning activities conducted?', 'What activities?', [
+    R('conducted', 'Conducted?', YN), A('activities', 'Activities')]),
+  Q(31, 2, 'Learning materials / toys available and usable?', 'Available / Functional', [
+    G('g', [{ k: 'materials', label: 'Learning materials / toys' }], AVF), A('remarks', 'Remarks')]),
+  Q(32, 2, 'Health check-up / immunisation coordination?', 'Frequency / gaps', [
+    T('frequency', 'Frequency', { wide: true }), A('gaps', 'Gaps')]),
+  Q(33, 2, 'What are the 3 biggest Anganwadi challenges?', 'Open-ended', three('Challenge').map(f => ({ ...f, wide: true }))),
+
+  /* ---------- D. PHC / HEALTH FACILITY ---------- */
+  Q(34, 3, 'Facility name and area/population covered?', 'Basic profile', [
+    T('name', 'Facility name', { wide: true }), T('area', 'Area / population covered', { wide: true })]),
+  Q(35, 3, 'Doctors / nurses / ANM / other staff sanctioned & available?', 'Numbers', [
+    NT('t', [{ k: 'doctors', label: 'Doctors' }, { k: 'nurses', label: 'Nurses' }, { k: 'anm', label: 'ANM' }, { k: 'other', label: 'Other staff' }],
+      [{ k: 'sanctioned', label: 'Sanctioned' }, { k: 'available', label: 'Available' }])]),
+  Q(36, 3, 'Approx. OPD / patient load?', 'Recent month if possible', [
+    N('load', 'Approx. OPD / patient load'), T('period', 'Month / period', { wide: true })]),
+  Q(37, 3, 'Are essential medicines generally available?', 'Yes / No + major gaps', [
+    R('available', 'Generally available?', YN), A('gaps', 'Major gaps')]),
+  Q(38, 3, 'Are basic diagnostics available?', 'List major available tests', [
+    A('tests', 'Major available tests')]),
+  Q(39, 3, 'Maternal health services available?', 'ANC / PNC / referral', [
+    C('services', 'Available services', ['ANC', 'PNC', 'Referral']), A('notes', 'Notes')]),
+  Q(40, 3, 'Child health / immunisation services available?', 'Brief', [A('notes', 'Answer')]),
+  Q(41, 3, 'NCD screening / treatment available?', 'If applicable', [
+    R('available', 'Available?', ['Yes', 'No', 'Not applicable']), A('notes', 'Notes')]),
+  Q(42, 3, 'Common health problems in this community?', 'Top 3–5', [
+    T('i1', 'Problem 1', { wide: true }), T('i2', 'Problem 2', { wide: true }), T('i3', 'Problem 3', { wide: true }),
+    T('i4', 'Problem 4', { wide: true }), T('i5', 'Problem 5', { wide: true })]),
+  Q(43, 3, 'Common reasons for referral outside the facility?', 'Transport / specialist / equipment etc.', [
+    C('reasons', 'Reasons', ['Transport', 'Specialist', 'Equipment', 'Other']), A('notes', 'Details')]),
+  Q(44, 3, 'Major health-access barriers?', 'Distance, cost, transport, awareness etc.', [
+    C('barriers', 'Barriers', ['Distance', 'Cost', 'Transport', 'Awareness', 'Other']), A('notes', 'Details')]),
+  Q(45, 3, 'What are the 3 biggest health-system gaps?', 'Open-ended', three('Gap').map(f => ({ ...f, wide: true }))),
+
+  /* ---------- E. COMMUNITY / HOUSEHOLD INTERACTION ---------- */
+  Q(46, 4, 'Where do families usually go when someone is sick?', 'PHC / private / hospital / other', [
+    R('place', 'Usual first place', ['PHC', 'Private', 'Hospital', 'Other']), T('other', 'If other, specify', { wide: true })]),
+  Q(47, 4, 'How easy is it to reach the health facility?', 'Easy / Moderate / Difficult + why', [
+    R('ease', 'Ease of reaching', ['Easy', 'Moderate', 'Difficult']), A('why', 'Why')]),
+  Q(48, 4, 'Do children generally attend school regularly?', 'Yes / No + reasons', [
+    R('regular', 'Attend regularly?', YN), A('reasons', 'Reasons')]),
+  Q(49, 4, 'What makes school attendance difficult?', 'Transport, work, learning difficulty, family reasons', [
+    C('reasons', 'Reasons', ['Transport', 'Work', 'Learning difficulty', 'Family reasons', 'Other']), A('notes', 'Details')]),
+  Q(50, 4, 'Do families use the Anganwadi regularly?', 'Yes / No + reasons', [
+    R('regular', 'Use regularly?', YN), A('reasons', 'Reasons')]),
+  Q(51, 4, 'Are people aware of major government services/schemes?', 'Which ones?', [
+    R('aware', 'Aware?', ['Yes', 'Partly', 'No']), A('which', 'Which ones?')]),
+  Q(52, 4, 'Which services are received but not fully accessible / satisfactory?', 'Open-ended', [A('notes', 'Answer')]),
+  Q(53, 4, 'Biggest problem facing children?', 'Open-ended', [A('notes', 'Answer')]),
+  Q(54, 4, 'Biggest problem facing families?', 'Open-ended', [A('notes', 'Answer')]),
+  Q(55, 4, 'If one thing could be improved, what should it be?', 'Open-ended', [A('notes', 'Answer')]),
+
+  /* ---------- F. PHYSICAL VERIFICATION ---------- */
+  Q(56, 5, 'School physically verified?', 'Yes / No', [R('verified', 'Verified?', YN)]),
+  Q(57, 5, 'Anganwadi physically verified?', 'Yes / No', [R('verified', 'Verified?', YN)]),
+  Q(58, 5, 'PHC / health facility physically verified?', 'Yes / No', [R('verified', 'Verified?', YN)]),
+  Q(59, 5, 'Facilities claimed as available but found non-functional?', 'Record specifics', [A('notes', 'Specifics')]),
+  Q(60, 5, 'Photographs / documentary evidence collected?', 'Yes / No; note photo/file numbers', [
+    R('collected', 'Collected?', YN), T('numbers', 'Photo / file numbers', { wide: true })]),
+  Q(61, 5, 'Any major observation not captured above?', 'Field notes', [A('notes', 'Field notes')]),
+
+  /* ---------- G. QUICK SUMMARY ---------- */
+  Q(62, 6, 'Education – key baseline finding', '1–2 lines', [A('notes', 'Key baseline finding', { rows: 2 })]),
+  Q(63, 6, 'Early Childhood – key baseline finding', '1–2 lines', [A('notes', 'Key baseline finding', { rows: 2 })]),
+  Q(64, 6, 'Health – key baseline finding', '1–2 lines', [A('notes', 'Key baseline finding', { rows: 2 })]),
+  Q(65, 6, 'Community – key baseline finding', '1–2 lines', [A('notes', 'Key baseline finding', { rows: 2 })]),
+  Q(66, 6, 'Convergence gap: School ↔ Anganwadi ↔ Health ↔ Community', 'What is working / missing?', [
+    A('working', 'What is working'), A('missing', 'What is missing')]),
+  Q(67, 6, 'Top 5 measurable indicators for future follow-up', 'Choose indicators measurable again', [
+    T('i1', 'Indicator 1', { wide: true }), T('i2', 'Indicator 2', { wide: true }), T('i3', 'Indicator 3', { wide: true }),
+    T('i4', 'Indicator 4', { wide: true }), T('i5', 'Indicator 5', { wide: true })])
+];
+
+const QMAP = {};
+QUESTIONS.forEach(q => { QMAP[q.n] = q; });
+
+
+/* Dependency-free PDF generator (A4, built-in Helvetica fonts) + ABHISARAN record layout */
+
+const PDFW = (() => {
+  /* Helvetica / Helvetica-Bold advance widths (1/1000 em) for ASCII 32..126 */
+  const REG = [278, 278, 355, 556, 556, 889, 667, 191, 333, 333, 389, 584, 278, 333, 278, 278,
+    556, 556, 556, 556, 556, 556, 556, 556, 556, 556, 278, 278, 584, 584, 584, 556, 1015,
+    667, 667, 722, 722, 667, 611, 778, 722, 278, 500, 667, 556, 833, 722, 778, 667, 778, 722, 667, 611, 722, 667, 944, 667, 667, 611,
+    278, 278, 278, 469, 556, 333,
+    556, 556, 500, 556, 556, 278, 556, 556, 222, 222, 500, 222, 833, 556, 556, 556, 556, 333, 500, 278, 556, 500, 722, 500, 500, 500,
+    334, 260, 334, 584];
+  const BOLD = [278, 333, 474, 556, 556, 889, 722, 238, 333, 333, 389, 584, 278, 333, 278, 278,
+    556, 556, 556, 556, 556, 556, 556, 556, 556, 556, 333, 333, 584, 584, 584, 611, 975,
+    722, 722, 722, 722, 667, 611, 778, 722, 278, 556, 722, 611, 833, 722, 778, 667, 778, 722, 667, 611, 722, 667, 944, 667, 667, 611,
+    333, 278, 333, 584, 556, 333,
+    556, 611, 556, 611, 556, 333, 611, 611, 278, 278, 556, 278, 889, 611, 611, 611, 611, 389, 556, 333, 611, 556, 778, 556, 556, 500,
+    389, 280, 389, 584];
+
+  /* characters outside ASCII that WinAnsi can show */
+  const WIN = {
+    0x20AC: 0x80, 0x2026: 0x85, 0x2018: 0x91, 0x2019: 0x92, 0x201C: 0x93, 0x201D: 0x94,
+    0x2022: 0x95, 0x2013: 0x96, 0x2014: 0x97, 0x2122: 0x99
+  };
+  const SPECIAL_W = { 0x2026: [1000, 1000], 0x2018: [222, 278], 0x2019: [222, 278], 0x201C: [333, 500], 0x201D: [333, 500],
+    0x2022: [350, 350], 0x2013: [556, 556], 0x2014: [1000, 1000], 0x2122: [1000, 1000], 0x20AC: [556, 556] };
+
+  function charW(ch, bold) {
+    const c = ch.charCodeAt(0);
+    const tbl = bold ? BOLD : REG;
+    if (c >= 32 && c <= 126) return tbl[c - 32];
+    if (SPECIAL_W[c]) return SPECIAL_W[c][bold ? 1 : 0];
+    if (c === 0xB0) return 400;
+    if (c >= 160 && c <= 255) {
+      const b = ch.normalize('NFD').charCodeAt(0);
+      if (b >= 32 && b <= 126) return tbl[b - 32];
+      return 556;
+    }
+    return 556; /* shown as '?' */
+  }
+
+  /* unicode string -> WinAnsi byte string */
+  function toWin(s) {
+    let o = '';
+    for (const ch of norm(s)) {
+      const c = ch.codePointAt(0);
+      if (c >= 32 && c <= 126) o += ch;
+      else if (c >= 160 && c <= 255) o += String.fromCharCode(c);
+      else if (WIN[c]) o += String.fromCharCode(WIN[c]);
+      else if (c === 9) o += ' ';
+      else o += '?';
+    }
+    return o;
+  }
+  function esc(win) {
+    let o = '';
+    for (let i = 0; i < win.length; i++) {
+      const c = win.charCodeAt(i), ch = win[i];
+      if (ch === '(' || ch === ')' || ch === '\\') o += '\\' + ch;
+      else if (c < 32 || c > 126) o += '\\' + c.toString(8).padStart(3, '0');
+      else o += ch;
+    }
+    return o;
+  }
+
+  const SYM = { '\u2265': '>=', '\u2264': '<=', '\u2192': '->', '\u2190': '<-', '\u20B9': 'Rs ', '\u2248': '~', '\u2212': '-', '\u2011': '-', '\u00A0': ' ', '\u2713': 'Yes', '\u00D7': 'x' };
+  const norm = s => String(s).replace(/[\u2265\u2264\u2192\u2190\u20B9\u2248\u2212\u2011\u00A0\u2713\u00D7]/g, c => SYM[c]);
+
+  const fmt = n => String(Math.round(n * 100) / 100);
+  const col = c => c.map(v => fmt(v / 255)).join(' ');
+
+  class Doc {
+    constructor() { this.W = 595.28; this.H = 841.89; this.pages = []; this.cur = null; }
+    addPage() { this.cur = []; this.pages.push(this.cur); return this.pages.length; }
+    setPage(i) { this.cur = this.pages[i - 1]; }
+    width(s, font, size) {
+      const bold = font === 'F2';
+      let w = 0;
+      for (const ch of norm(s)) w += charW(ch, bold);
+      return w * size / 1000;
+    }
+    text(s, x, y, o = {}) {
+      const font = o.font || 'F1', size = o.size || 10, color = o.color || [0, 0, 0];
+      this.cur.push(`BT /${font} ${fmt(size)} Tf ${col(color)} rg ${fmt(x)} ${fmt(this.H - y)} Td (${esc(toWin(s))}) Tj ET`);
+    }
+    line(x1, y1, x2, y2, w, color) {
+      this.cur.push(`${fmt(w)} w ${col(color)} RG ${fmt(x1)} ${fmt(this.H - y1)} m ${fmt(x2)} ${fmt(this.H - y2)} l S`);
+    }
+    rect(x, y, w, h, o = {}) {
+      let op = '';
+      if (o.fill) op += `${col(o.fill)} rg `;
+      if (o.stroke) op += `${fmt(o.lw || 0.6)} w ${col(o.stroke)} RG `;
+      const paint = o.fill && o.stroke ? 'B' : o.fill ? 'f' : 'S';
+      this.cur.push(`${op}${fmt(x)} ${fmt(this.H - y - h)} ${fmt(w)} ${fmt(h)} re ${paint}`);
+    }
+    build(title) {
+      const n = this.pages.length;
+      const body = [];
+      body[1] = '<< /Type /Catalog /Pages 2 0 R >>';
+      const kids = [];
+      for (let i = 0; i < n; i++) kids.push(`${6 + 2 * i} 0 R`);
+      body[2] = `<< /Type /Pages /Kids [${kids.join(' ')}] /Count ${n} >>`;
+      body[3] = '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>';
+      body[4] = '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>';
+      body[5] = '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Oblique /Encoding /WinAnsiEncoding >>';
+      for (let i = 0; i < n; i++) {
+        const data = this.pages[i].join('\n');
+        body[6 + 2 * i] = `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${fmt(this.W)} ${fmt(this.H)}] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >> >> /Contents ${7 + 2 * i} 0 R >>`;
+        body[7 + 2 * i] = `<< /Length ${data.length} >>\nstream\n${data}\nendstream`;
+      }
+      const infoNo = 6 + 2 * n;
+      const d = new Date();
+      const p2 = v => String(v).padStart(2, '0');
+      const stamp = `D:${d.getFullYear()}${p2(d.getMonth() + 1)}${p2(d.getDate())}${p2(d.getHours())}${p2(d.getMinutes())}${p2(d.getSeconds())}`;
+      body[infoNo] = `<< /Title (${esc(toWin(title))}) /Producer (ABHISARAN Field Form) /Creator (ABHISARAN Field Form) /CreationDate (${stamp}) >>`;
+      let out = '%PDF-1.4\n%âãÏÓ\n';
+      const offs = [];
+      for (let i = 1; i <= infoNo; i++) {
+        offs[i] = out.length;
+        out += `${i} 0 obj\n${body[i]}\nendobj\n`;
+      }
+      const xref = out.length;
+      out += `xref\n0 ${infoNo + 1}\n0000000000 65535 f \n`;
+      for (let i = 1; i <= infoNo; i++) out += String(offs[i]).padStart(10, '0') + ' 00000 n \n';
+      out += `trailer\n<< /Size ${infoNo + 1} /Root 1 0 R /Info ${infoNo} 0 R >>\nstartxref\n${xref}\n%%EOF`;
+      const bytes = new Uint8Array(out.length);
+      for (let i = 0; i < out.length; i++) bytes[i] = out.charCodeAt(i) & 255;
+      return bytes;
+    }
+  }
+
+  /* ------------------------------------------------------------------ */
+  const COL = {
+    accent: [11, 107, 92], ink: [24, 36, 33], ans: [8, 52, 110], gray: [104, 116, 112],
+    line: [196, 205, 201], white: [255, 255, 255], soft: [226, 240, 236]
+  };
+  const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  function fmtDate(iso) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || '');
+    return m ? `${m[3]} ${MON[+m[2] - 1]} ${m[1]}` : (iso || '');
+  }
+
+  function wrap(d, str, font, size, maxW) {
+    const out = [];
+    String(str).split(/\r\n|\r|\n/).forEach(par => {
+      if (par.trim() === '') { out.push(''); return; }
+      let line = '';
+      par.split(' ').forEach(word => {
+        let w = word;
+        const test = line ? line + ' ' + w : w;
+        if (d.width(test, font, size) <= maxW) { line = test; return; }
+        if (line) { out.push(line); line = ''; }
+        while (d.width(w, font, size) > maxW) {
+          let cut = 1;
+          while (cut < w.length && d.width(w.slice(0, cut + 1), font, size) <= maxW) cut++;
+          out.push(w.slice(0, cut));
+          w = w.slice(cut);
+        }
+        line = w;
+      });
+      out.push(line);
+    });
+    return out;
+  }
+
+  function fit(d, str, font, size, maxW) {
+    str = String(str || '');
+    if (d.width(str, font, size) <= maxW) return str;
+    while (str.length > 1 && d.width(str + '...', font, size) > maxW) str = str.slice(0, -1);
+    return str + '...';
+  }
+
+  /* turn a question + its answers into printable rows */
+  function pdfRows(q, rec) {
+    const a = rec.answers['question' + q.n] || {};
+    const rows = [];
+    const blank = '____';
+    q.fields.forEach(f => {
+      const v = a[f.k];
+      if (f.type === 'grid') {
+        f.rows.forEach(rw => {
+          const parts = f.cols.map(c => `${c.label}: ${a[rw.k + '_' + c.k] || blank}`);
+          rows.push({ label: rw.label, value: parts.join('      '), minLines: 1 });
+        });
+      } else if (f.type === 'numtable') {
+        f.rows.forEach(rw => {
+          const parts = f.cols.map(c => `${c.label}: ${a[rw.k + '_' + c.k] !== undefined ? a[rw.k + '_' + c.k] : blank}`);
+          rows.push({ label: rw.label, value: parts.join('      '), minLines: 1 });
+        });
+      } else if (f.type === 'check') {
+        rows.push({ label: f.label, value: (v || []).join(', '), minLines: 1 });
+      } else if (f.type === 'area') {
+        const label = f.label === 'Answer' ? '' : f.label;
+        rows.push({ label, value: v || '', minLines: 2 });
+      } else {
+        let val = v || '';
+        if (f.type === 'number' && f.max === 100 && val !== '') val += ' %';
+        rows.push({ label: f.label, value: val, minLines: 1 });
+      }
+    });
+    return rows;
+  }
+
+  function buildPdf(records, opts = {}) {
+    const numOf = ri => (opts.nums ? opts.nums[ri] : ri + 1);
+    const totalRecs = opts.total || records.length;
+    const d = new Doc();
+    const PW = d.W, PH = d.H, M = 42, CW = PW - 2 * M, TOP = 66, BOT = PH - 54, LH = 15.5;
+    const meta = [];
+    let y = 0, curRi = 0;
+
+    function newPage(ri, first) {
+      d.addPage();
+      meta.push({ ri, first });
+      curRi = ri;
+      y = first ? 0 : TOP;
+    }
+    function ensure(h) { if (y + h > BOT) newPage(curRi, false); }
+
+    function titleBlock(rec, ri) {
+      const band = 66;
+      d.rect(0, 0, PW, band, { fill: COL.accent });
+      const title = 'ABHISARAN – VILLAGE BASELINE & IMPACT ASSESSMENT FIELD FORM';
+      let size = 12.5;
+      while (d.width(title, 'F2', size) > CW && size > 8) size -= 0.25;
+      d.text(title, M, 30, { font: 'F2', size, color: COL.white });
+      d.text('East Khasi Hills Pilot', M, 50, { font: 'F1', size: 11, color: [214, 238, 232] });
+      y = band + 18;
+      const bh = 38, gap = 10;
+      const w1 = 130, w3 = 150, w2 = CW - w1 - w3 - 2 * gap;
+      const boxes = [
+        { x: M, w: w1, label: 'DATE', value: fmtDate(rec.date) },
+        { x: M + w1 + gap, w: w2, label: 'VILLAGE', value: rec.village || '' },
+        { x: M + w1 + w2 + 2 * gap, w: w3, label: 'RECORD', value: `Village Record ${numOf(ri)} of ${totalRecs}` }
+      ];
+      boxes.forEach(b => {
+        d.rect(b.x, y, b.w, bh, { fill: [247, 250, 249], stroke: COL.line, lw: 0.7 });
+        d.text(b.label, b.x + 8, y + 12, { font: 'F2', size: 7, color: COL.gray });
+        d.text(fit(d, b.value, 'F2', 10.5, b.w - 16), b.x + 8, y + 29, { font: 'F2', size: 10.5, color: COL.ans });
+      });
+      y += bh + 18;
+    }
+
+    function sectionHeading(s, extra) {
+      ensure(24 + extra);
+      d.rect(M, y, CW, 20, { fill: COL.accent });
+      d.text(s.title, M + 8, y + 13.6, { font: 'F2', size: 9.5, color: COL.white });
+      y += 20 + 9;
+    }
+
+    function drawArrowTitle(text, x, base, size) {
+      const segs = text.split('↔').map(s => s.trim());
+      let cx = x;
+      segs.forEach((s, i) => {
+        if (i > 0) {
+          cx += 5;
+          const ax = cx, bx = cx + 14, ay = base - size * 0.32;
+          d.line(ax, ay, bx, ay, 0.9, COL.ink);
+          d.line(ax, ay, ax + 3.2, ay - 2.4, 0.9, COL.ink);
+          d.line(ax, ay, ax + 3.2, ay + 2.4, 0.9, COL.ink);
+          d.line(bx, ay, bx - 3.2, ay - 2.4, 0.9, COL.ink);
+          d.line(bx, ay, bx - 3.2, ay + 2.4, 0.9, COL.ink);
+          cx = bx + 5;
+        }
+        d.text(s, cx, base, { font: 'F2', size, color: COL.ink });
+        cx += d.width(s, 'F2', size);
+      });
+    }
+    function arrowTitleWidth(text, size) {
+      const segs = text.split('↔').map(s => s.trim());
+      return segs.reduce((w, s) => w + d.width(s, 'F2', size), 0) + (segs.length - 1) * 24;
+    }
+
+    function drawRow(row) {
+      const ax = M + 26, aw = CW - 26;
+      const labelW = row.label ? 128 : 0;
+      const vx = ax + labelW, vw = aw - labelW;
+      const lines = row.value !== '' ? wrap(d, row.value, 'F1', 9.5, vw - 4) : [];
+      const n = Math.max(lines.length, row.minLines);
+      for (let i = 0; i < n; i++) {
+        ensure(LH);
+        const base = y + LH - 4.8;
+        if (i === 0 && row.label) {
+          let ls = 8;
+          while (d.width(row.label, 'F2', ls) > labelW - 8 && ls > 6) ls -= 0.25;
+          d.text(row.label, ax, base, { font: 'F2', size: ls, color: COL.gray });
+        }
+        if (lines[i]) d.text(lines[i], vx, base, { font: 'F1', size: 9.5, color: COL.ans });
+        d.line(vx, y + LH - 1.6, ax + aw, y + LH - 1.6, 0.4, COL.line);
+        y += LH;
+      }
+    }
+
+    function drawQuestion(q, rec) {
+      const nx = M + 26, qw = CW - 26;
+      const arrow = q.text.indexOf('↔') >= 0 && arrowTitleWidth(q.text, 10) <= qw;
+      const tlines = arrow ? [q.text] : wrap(d, q.text.replace(/↔/g, '<->'), 'F2', 10, qw);
+      const rows = pdfRows(q, rec);
+      ensure(tlines.length * 13 + 13 + LH + 2);
+      d.text(q.n + '.', M, y + 10, { font: 'F2', size: 10, color: COL.accent });
+      tlines.forEach((t, i) => {
+        if (arrow) drawArrowTitle(t, nx, y + 10, 10);
+        else d.text(t, nx, y + 10 + i * 13, { font: 'F2', size: 10, color: COL.ink });
+      });
+      y += tlines.length * 13;
+      if (q.hint) { d.text(q.hint, nx, y + 8, { font: 'F3', size: 8.2, color: COL.gray }); y += 12; }
+      y += 3;
+      rows.forEach(drawRow);
+      y += 11;
+    }
+
+    records.forEach((rec, ri) => {
+      newPage(ri, true);
+      titleBlock(rec, ri);
+      SECTIONS.forEach((s, si) => {
+        const qs = QUESTIONS.filter(q => q.s === si);
+        sectionHeading(s, 44);
+        qs.forEach(q => drawQuestion(q, rec));
+        y += 4;
+      });
+    });
+
+    /* running headers and footers */
+    const total = d.pages.length;
+    for (let i = 0; i < total; i++) {
+      d.setPage(i + 1);
+      const m = meta[i], rec = records[m.ri];
+      if (!m.first) {
+        d.text('ABHISARAN – VILLAGE BASELINE & IMPACT ASSESSMENT FIELD FORM', M, 36, { font: 'F2', size: 7.5, color: COL.accent });
+        const right = fit(d, `Village Record ${numOf(m.ri)} of ${totalRecs}${rec.village ? '  |  ' + rec.village : ''}`, 'F1', 7.5, 230);
+        d.text(right, PW - M - d.width(right, 'F1', 7.5), 36, { font: 'F1', size: 7.5, color: COL.gray });
+        d.line(M, 42, PW - M, 42, 0.6, COL.line);
+      }
+      d.line(M, PH - 38, PW - M, PH - 38, 0.6, COL.line);
+      d.text('East Khasi Hills Pilot  |  Field data record', M, PH - 26, { font: 'F1', size: 7.5, color: COL.gray });
+      const pg = `Page ${i + 1} of ${total}`;
+      d.text(pg, PW - M - d.width(pg, 'F1', 7.5), PH - 26, { font: 'F1', size: 7.5, color: COL.gray });
+    }
+    const title = records.length === 1
+      ? `ABHISARAN Field Form - ${records[0].village || 'Village Record ' + numOf(0)}`
+      : `ABHISARAN Field Form - ${records.length} village records`;
+    return d.build(title);
+  }
+
+  function download(bytes, filename) {
+    const blob = new Blob([bytes], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click();
+    setTimeout(() => { a.remove(); URL.revokeObjectURL(url); }, 4000);
+
+    /* Cross-frame message to ABHISARAN /source portal */
+    try {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const msg = {
+          type: 'ABHISARAN_PDF_EXPORTED',
+          fileName: filename,
+          dataUrl: reader.result,
+          byteLength: bytes.length
+        };
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage(msg, '*');
+        }
+        if (window.opener && !window.opener.closed) {
+          window.opener.postMessage(msg, '*');
+        }
+      };
+      reader.readAsDataURL(blob);
+    } catch (err) {
+      console.warn('PDF postMessage hook error:', err);
+    }
+  }
+
+  return { buildPdf, download, Doc };
+})();
+
+
+
+(function () {
+  'use strict';
+
+  const KEY = 'abhisaran_field_form_v1';
+  const $ = s => document.querySelector(s);
+  const $$ = s => Array.from(document.querySelectorAll(s));
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const TOTAL_Q = QUESTIONS.length;
+
+  let records = [], currentId = null, section = 0, curQ = 1;
+  let dirty = false, storageOk = true, saveTimer = null, lastSaved = null;
+
+  /* ---------------------------------------------------------------- data */
+  const uid = () => 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  function todayISO() {
+    const d = new Date(), p = v => String(v).padStart(2, '0');
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+  }
+  function blankAnswers() {
+    const a = {};
+    QUESTIONS.forEach(q => { a['question' + q.n] = {}; });
+    return a;
+  }
+  function blankRecord() { return { id: uid(), date: todayISO(), village: '', answers: blankAnswers() }; }
+  function normRecord(r) {
+    const answers = blankAnswers();
+    if (r && r.answers && typeof r.answers === 'object') {
+      Object.keys(answers).forEach(k => {
+        const src = r.answers[k];
+        if (src && typeof src === 'object' && !Array.isArray(src)) answers[k] = JSON.parse(JSON.stringify(src));
+      });
+    }
+    const village = String((r && r.village) || (answers.question1 && answers.question1.village) || '');
+    if (village) answers.question1.village = village;
+    return { id: (r && r.id) || uid(), date: String((r && r.date) || todayISO()), village, answers };
+  }
+  const rec = () => records.find(r => r.id === currentId) || records[0];
+  const recIndex = () => Math.max(0, records.findIndex(r => r.id === rec().id));
+  const fieldOf = (n, k) => (QMAP[n].fields.find(f => f.k === k)) || {};
+
+  function qAnswered(r, n) {
+    const a = r.answers['question' + n] || {};
+    return Object.values(a).some(v => Array.isArray(v) ? v.length > 0 : String(v).trim() !== '');
+  }
+  function stats(r) {
+    const sec = SECTIONS.map(() => ({ done: 0, total: 0 }));
+    let done = 0;
+    QUESTIONS.forEach(q => {
+      sec[q.s].total++;
+      if (qAnswered(r, q.n)) { sec[q.s].done++; done++; }
+    });
+    return { done, sec };
+  }
+
+  /* ---------------------------------------------------------- persistence */
+  function load() {
+    try {
+      const raw = localStorage.getItem(KEY);
+      if (!raw) return false;
+      const d = JSON.parse(raw);
+      if (!d || !Array.isArray(d.records) || !d.records.length) return false;
+      records = d.records.map(normRecord);
+      currentId = records.some(r => r.id === d.currentId) ? d.currentId : records[0].id;
+      section = Number.isInteger(d.section) && d.section >= 0 && d.section < SECTIONS.length ? d.section : 0;
+      return true;
+    } catch (e) { return false; }
+  }
+  function persist() {
+    clearTimeout(saveTimer); saveTimer = null;
+    try {
+      localStorage.setItem(KEY, JSON.stringify({ v: 1, records, currentId, section, savedAt: Date.now() }));
+      storageOk = true; dirty = false; lastSaved = new Date();
+      setStatus('saved');
+    } catch (e) {
+      storageOk = false; setStatus('error');
+    }
+    $('#banner').hidden = storageOk;
+  }
+  function scheduleSave() {
+    dirty = true; setStatus('saving');
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(persist, 350);
+  }
+  function setStatus(kind) {
+    const el = $('#saveStatus');
+    el.className = 'status' + (kind === 'saving' ? ' saving' : kind === 'error' ? ' error' : '');
+    const t = el.querySelector('.t');
+    if (kind === 'saving') t.textContent = 'Saving…';
+    else if (kind === 'error') t.textContent = 'Not saved – export a backup';
+    else {
+      const d = lastSaved || new Date(), p = v => String(v).padStart(2, '0');
+      t.textContent = `Saved ${p(d.getHours())}:${p(d.getMinutes())}`;
+    }
+  }
+
+  /* -------------------------------------------------------------- toasts */
+  let toastTimer;
+  function toast(msg, ms = 3200) {
+    const t = $('#toast');
+    t.textContent = msg; t.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { t.hidden = true; }, ms);
+  }
+
+  /* --------------------------------------------------------------- modal */
+  function modal(o) {
+    const host = $('#modal');
+    const typed = o.confirmText;
+    host.innerHTML = `<div class="scrim" id="scrim"><div class="dlg" role="dialog" aria-modal="true" aria-labelledby="dlgT">
+      <h2 id="dlgT">${esc(o.title)}</h2>
+      <p>${o.body}</p>
+      ${typed ? `<input type="text" id="dlgInput" placeholder="Type ${esc(typed)}" autocomplete="off" aria-label="Type ${esc(typed)} to confirm">` : ''}
+      <div class="acts">${o.actions.map((a, i) => `<button class="btn ${a.cls || ''}" data-i="${i}" ${a.needsText ? 'disabled' : ''}>${esc(a.label)}</button>`).join('')}</div>
+    </div></div>`;
+    host.hidden = false;
+    const close = () => { host.hidden = true; host.innerHTML = ''; document.removeEventListener('keydown', onKey); };
+    const onKey = e => { if (e.key === 'Escape') close(); };
+    document.addEventListener('keydown', onKey);
+    const input = $('#dlgInput');
+    if (input) {
+      input.addEventListener('input', () => {
+        const ok = input.value.trim() === typed;
+        host.querySelectorAll('button[data-i]').forEach(b => { if (o.actions[+b.dataset.i].needsText) b.disabled = !ok; });
+      });
+      input.focus();
+    }
+    host.querySelector('#scrim').addEventListener('click', e => { if (e.target.id === 'scrim') close(); });
+    host.querySelectorAll('button[data-i]').forEach(b => b.addEventListener('click', () => {
+      const a = o.actions[+b.dataset.i];
+      close();
+      if (a.fn) a.fn();
+    }));
+    const first = host.querySelector('button[data-i]:not([disabled])');
+    if (first && !input) first.focus();
+  }
+
+  /* ------------------------------------------------------------ rendering */
+  function fieldHTML(q, f, a) {
+    const id = `q${q.n}-${f.k}`;
+    const v = a[f.k];
+    const data = `data-q="${q.n}" data-k="${f.k}"`;
+    switch (f.type) {
+      case 'text':
+        return `<div class="fld ${f.wide ? 'wide' : ''}"><label for="${id}">${esc(f.label)}</label><input type="text" id="${id}" ${data} data-t="text" value="${esc(v || '')}" placeholder="${esc(f.ph || '')}" autocomplete="off"></div>`;
+      case 'number':
+        return `<div class="fld"><label for="${id}">${esc(f.label)}</label><input type="text" id="${id}" ${data} data-t="num" inputmode="${f.dec ? 'decimal' : 'numeric'}" value="${esc(v || '')}" placeholder="0" autocomplete="off"></div>`;
+      case 'area':
+        return `<div class="fld full"><label for="${id}">${esc(f.label)}</label><textarea id="${id}" ${data} data-t="area" class="${f.rows === 2 ? 'small' : ''}" rows="${f.rows || 3}">${esc(v || '')}</textarea></div>`;
+      case 'radio':
+        return `<div class="fld full"><span class="lbl" id="${id}-l">${esc(f.label)}</span><div class="seg" role="radiogroup" aria-labelledby="${id}-l">${f.opts.map(o => `<button type="button" class="opt" role="radio" aria-checked="${v === o}" data-mode="radio" ${data} data-v="${esc(o)}">${esc(o)}</button>`).join('')}</div></div>`;
+      case 'check':
+        return `<div class="fld full"><span class="lbl" id="${id}-l">${esc(f.label)}</span><div class="seg" role="group" aria-labelledby="${id}-l">${f.opts.map(o => `<button type="button" class="opt chip" role="checkbox" aria-checked="${(v || []).includes(o)}" data-mode="check" ${data} data-v="${esc(o)}">${esc(o)}</button>`).join('')}</div></div>`;
+      case 'grid':
+        return `<div class="fld full"><div class="grid-rows">${f.rows.map(rw => `<div class="grow-row"><span class="gl">${esc(rw.label)}</span><div class="gcols">${f.cols.map(c => {
+          const key = rw.k + '_' + c.k, cur = a[key];
+          return `<div class="gcol"><span class="lbl">${esc(c.label)}</span><div class="seg" role="radiogroup" aria-label="${esc(rw.label + ' ' + c.label)}">${['Yes', 'No'].map(o => `<button type="button" class="opt" role="radio" aria-checked="${cur === o}" data-mode="radio" data-q="${q.n}" data-k="${key}" data-v="${o}">${o}</button>`).join('')}</div></div>`;
+        }).join('')}</div></div>`).join('')}</div></div>`;
+      case 'numtable':
+        return `<div class="fld full"><div class="tbl-wrap"><table class="nt"><thead><tr><th></th>${f.cols.map(c => `<th scope="col">${esc(c.label)}</th>`).join('')}</tr></thead><tbody>${f.rows.map(rw => `<tr><th scope="row">${esc(rw.label)}</th>${f.cols.map(c => {
+          const key = rw.k + '_' + c.k;
+          return `<td><input type="text" ${`data-q="${q.n}" data-k="${key}"`} data-t="num" inputmode="numeric" value="${esc(a[key] || '')}" placeholder="0" aria-label="${esc(rw.label + ' ' + c.label)}" autocomplete="off"></td>`;
+        }).join('')}</tr>`).join('')}</tbody></table></div></div>`;
+    }
+    return '';
+  }
+
+  function cardHTML(q, r) {
+    const a = r.answers['question' + q.n] || {};
+    const note = (q.n === 10 || q.n === 24) ? `<div class="fld full"><div class="note" id="note-q${q.n}" hidden></div></div>` : '';
+    return `<article class="qcard ${qAnswered(r, q.n) ? 'done' : ''}" id="card-${q.n}" data-n="${q.n}">
+      <div class="qhead"><span class="qnum">${q.n}</span><div><h3 class="qtext">${esc(q.text)}</h3>${q.hint ? `<p class="qhint">${esc(q.hint)}</p>` : ''}</div></div>
+      <div class="qbody">${q.fields.map(f => fieldHTML(q, f, a)).join('')}${note}</div>
+    </article>`;
+  }
+
+  function autosize(t) {
+    t.style.height = 'auto';
+    t.style.height = Math.max(t.scrollHeight + 2, 66) + 'px';
+  }
+
+  function renderForm() {
+    const r = rec();
+    const qs = QUESTIONS.filter(q => q.s === section);
+    $('#form').innerHTML = qs.map(q => cardHTML(q, r)).join('');
+    $$('#form textarea').forEach(autosize);
+    checkSum(10); checkSum(24);
+    const s = SECTIONS[section];
+    $('#secHead').innerHTML = `<h2>${esc(s.title)}</h2><span>${qs.length} questions · Q${qs[0].n}–Q${qs[qs.length - 1].n}</span>`;
+    const first = qs[0].n;
+    if (curQ < first || curQ > qs[qs.length - 1].n) curQ = first;
+  }
+
+  function renderTabs() {
+    $('#tabs').innerHTML = records.map((r, i) => `<button class="tab" role="tab" data-id="${r.id}" aria-current="${r.id === rec().id}" aria-selected="${r.id === rec().id}" title="Record ${i + 1} – ${esc(r.village || 'Untitled')}">${i + 1} · ${esc(r.village || 'Untitled')}</button>`).join('');
+    const cur = $('#tabs .tab[aria-current="true"]');
+    if (cur && cur.scrollIntoView) cur.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  }
+
+  function renderRecHead() {
+    const r = rec();
+    $('#hdrDate').value = r.date || '';
+    $('#hdrVillage').value = r.village || '';
+    $('#recBadge').textContent = `Village Record ${recIndex() + 1} of ${records.length}`;
+    $('#pdfCurSub').textContent = `Village Record ${recIndex() + 1} of ${records.length}`;
+    $('#pdfAllSub').textContent = `${records.length} record${records.length === 1 ? '' : 's'}, in order`;
+  }
+
+  function renderNav() {
+    const st = stats(rec());
+    $('#navList').innerHTML = SECTIONS.map((s, i) => {
+      const x = st.sec[i], ok = x.done === x.total;
+      return `<button class="nav-item ${i === section ? 'on' : ''}" data-sec="${i}"><span class="nl">${s.id}. ${esc(s.short)}</span><span class="ns ${ok ? 'ok' : ''}">${ok ? '✓ Complete' : '○ Incomplete'} · ${x.done}/${x.total} answered</span></button>`;
+    }).join('');
+    const sel = $('#jump');
+    sel.innerHTML = SECTIONS.map((s, i) => `<option value="${i}" ${i === section ? 'selected' : ''}>${s.id}. ${esc(s.short)} — ${st.sec[i].total} questions ${st.sec[i].done === st.sec[i].total ? '✓' : '○'}</option>`).join('');
+    sel.value = String(section);
+  }
+
+  function updateStrip() {
+    const st = stats(rec());
+    const pct = Math.round(st.done / TOTAL_Q * 100);
+    $('#stripQ').textContent = `Question ${curQ} of ${TOTAL_Q}`;
+    $('#stripPct').textContent = `${pct}% complete · ${st.done} of ${TOTAL_Q} answered`;
+    $('#barFill').style.width = pct + '%';
+    $('#bar').setAttribute('aria-valuenow', pct);
+    $('#bbInfo').textContent = `${SECTIONS[section].id}. ${SECTIONS[section].short}`;
+    $('#prevBtn').disabled = section === 0;
+    $('#nextBtn').disabled = section === SECTIONS.length - 1;
+  }
+
+  function updateChrome() {
+    const r = rec();
+    $$('#form .qcard').forEach(c => c.classList.toggle('done', qAnswered(r, +c.dataset.n)));
+    renderNav();
+    updateStrip();
+    const tab = $('#tabs .tab[aria-current="true"]');
+    if (tab) { const i = recIndex(); tab.textContent = `${i + 1} · ${r.village || 'Untitled'}`; tab.title = `Record ${i + 1} – ${r.village || 'Untitled'}`; }
+  }
+
+  function renderAll() {
+    renderTabs(); renderRecHead(); renderForm(); renderNav(); updateStrip();
+  }
+
+  /* ------------------------------------------------------------- editing */
+  function setAnswer(n, k, val) {
+    const r = rec();
+    const key = 'question' + n;
+    const a = r.answers[key] || (r.answers[key] = {});
+    const empty = val == null || val === '' || (Array.isArray(val) && !val.length);
+    if (empty) delete a[k]; else a[k] = val;
+    if (n === 1 && k === 'village') {
+      r.village = val || '';
+      if ($('#hdrVillage').value !== r.village) $('#hdrVillage').value = r.village;
+    }
+    scheduleSave();
+    updateChrome();
+  }
+
+  function cleanNum(v, f) {
+    if (f && f.dec) {
+      v = v.replace(/[^0-9.]/g, '');
+      const i = v.indexOf('.');
+      if (i >= 0) v = v.slice(0, i + 1) + v.slice(i + 1).replace(/\./g, '').slice(0, 2);
+    } else v = v.replace(/[^0-9]/g, '');
+    v = v.slice(0, 9);
+    if (/^0\d/.test(v)) v = v.replace(/^0+/, '') || '0';
+    if (f && f.max != null && v !== '' && parseFloat(v) > f.max) v = String(f.max);
+    return v;
+  }
+
+  function checkSum(n) {
+    const note = $('#note-q' + n);
+    if (!note) return;
+    const a = rec().answers['question' + n] || {};
+    const t = a.total, b = a.boys, g = a.girls;
+    if (t !== undefined && b !== undefined && g !== undefined && (+b + +g) !== +t) {
+      note.hidden = false;
+      note.textContent = `Boys + Girls = ${+b + +g}, but the total entered is ${+t}. Please re-check the figures.`;
+    } else note.hidden = true;
+  }
+
+  function onInput(e) {
+    const t = e.target;
+    if (!t.dataset || !t.dataset.q || t.dataset.mode) return;
+    const n = +t.dataset.q, k = t.dataset.k;
+    let v = t.value;
+    if (t.dataset.t === 'num') {
+      const base = k.split('_')[0];
+      const f = fieldOf(n, k) || fieldOf(n, base);
+      const c = cleanNum(v, f);
+      if (c !== v) { const pos = t.selectionStart; t.value = c; try { t.setSelectionRange(pos - (v.length - c.length), pos - (v.length - c.length)); } catch (x) { /* ignore */ } }
+      v = c;
+    }
+    if (t.tagName === 'TEXTAREA') autosize(t);
+    setAnswer(n, k, v);
+    if (n === 10 || n === 24) checkSum(n);
+  }
+
+  function onOptClick(e) {
+    const b = e.target.closest('.opt');
+    if (!b) return;
+    const n = +b.dataset.q, k = b.dataset.k, v = b.dataset.v;
+    const group = b.parentElement;
+    if (b.dataset.mode === 'radio') {
+      const was = b.getAttribute('aria-checked') === 'true';
+      group.querySelectorAll('.opt').forEach(x => x.setAttribute('aria-checked', 'false'));
+      if (!was) b.setAttribute('aria-checked', 'true');
+      setAnswer(n, k, was ? '' : v);
+    } else {
+      b.setAttribute('aria-checked', b.getAttribute('aria-checked') === 'true' ? 'false' : 'true');
+      const vals = Array.from(group.querySelectorAll('.opt')).filter(x => x.getAttribute('aria-checked') === 'true').map(x => x.dataset.v);
+      setAnswer(n, k, vals);
+    }
+  }
+
+  /* ----------------------------------------------------------- navigation */
+  function setSection(i, scroll = true) {
+    section = Math.max(0, Math.min(SECTIONS.length - 1, i));
+    renderForm(); renderNav(); updateStrip();
+    scheduleSave();
+    if (scroll) $('#secHead').scrollIntoView({ block: 'start' });
+  }
+
+  function goQ(n) {
+    const q = QMAP[n];
+    if (!q) return;
+    if (q.s !== section) setSection(q.s, false);
+    curQ = n;
+    lockUntil = Date.now() + 1200;
+    updateStrip();
+    requestAnimationFrame(() => {
+      const el = $('#card-' + n);
+      if (!el) return;
+      el.scrollIntoView({ block: 'start' });
+      el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash');
+    });
+  }
+
+  let ticking = false, lockUntil = 0;
+  function onScroll() {
+    if (ticking || Date.now() < lockUntil) return;
+    ticking = true;
+    requestAnimationFrame(() => {
+      ticking = false;
+      const cards = $$('#form .qcard');
+      if (!cards.length) return;
+      const line = $('#strip').getBoundingClientRect().bottom + 60;
+      let pick = cards[0];
+      cards.forEach(c => { if (c.getBoundingClientRect().top <= line) pick = c; });
+      if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4) pick = cards[cards.length - 1];
+      const n = +pick.dataset.n;
+      if (n !== curQ) { curQ = n; updateStrip(); }
+    });
+  }
+
+  /* -------------------------------------------------------------- records */
+  function switchTo(id, top) {
+    currentId = id;
+    renderAll();
+    scheduleSave();
+    if (top) window.scrollTo({ top: 0 });
+  }
+  function addRecord() {
+    const r = blankRecord();
+    records.push(r);
+    section = 0; curQ = 1;
+    switchTo(r.id, true);
+    toast(`Village Record ${records.length} created – a fresh, blank copy of all ${TOTAL_Q} questions.`);
+  }
+  function duplicateRecord() {
+    const src = rec();
+    const copy = normRecord(JSON.parse(JSON.stringify(src)));
+    copy.id = uid();
+    copy.village = src.village ? src.village + ' (copy)' : '';
+    if (copy.village) copy.answers.question1.village = copy.village;
+    records.splice(recIndex() + 1, 0, copy);
+    switchTo(copy.id, true);
+    toast(`Village Record ${recIndex() + 1} created as a new, independent copy. Changes here will not affect the original.`, 5000);
+  }
+  function clearCurrent() {
+    const i = recIndex();
+    modal({
+      title: 'Clear current record?',
+      body: `All answers in <b>Village Record ${i + 1}${rec().village ? ' – ' + esc(rec().village) : ''}</b> will be erased. Other records are not affected. This cannot be undone.`,
+      actions: [{ label: 'Cancel' }, {
+        label: 'Clear record', cls: 'danger', fn: () => {
+          const r = rec(); r.answers = blankAnswers(); r.village = ''; r.date = todayISO();
+          renderAll(); persist(); toast('Record cleared.');
+        }
+      }]
+    });
+  }
+  function deleteRecord() {
+    if (records.length === 1) { clearCurrent(); return; }
+    const i = recIndex();
+    modal({
+      title: 'Delete this record?',
+      body: `<b>Village Record ${i + 1}${rec().village ? ' – ' + esc(rec().village) : ''}</b> and all its answers will be removed. The remaining records are renumbered. This cannot be undone.`,
+      actions: [{ label: 'Cancel' }, {
+        label: 'Delete record', cls: 'danger', fn: () => {
+          records.splice(i, 1);
+          currentId = records[Math.min(i, records.length - 1)].id;
+          renderAll(); persist(); toast('Record deleted.');
+        }
+      }]
+    });
+  }
+  function clearAll() {
+    modal({
+      title: 'Clear ALL records?',
+      body: `This permanently erases <b>all ${records.length} record${records.length === 1 ? '' : 's'}</b> and every answer in them, leaving one blank record. Export a backup first if you might need the data. This cannot be undone.`,
+      confirmText: 'DELETE ALL',
+      actions: [
+        { label: 'Export backup first', fn: () => { exportData(); } },
+        { label: 'Cancel' },
+        {
+          label: 'Erase everything', cls: 'danger', needsText: true, fn: () => {
+            const r = blankRecord(); records = [r]; currentId = r.id; section = 0; curQ = 1;
+            renderAll(); persist(); window.scrollTo({ top: 0 }); toast('All records cleared.');
+          }
+        }]
+    });
+  }
+
+  /* ------------------------------------------------------ backup / restore */
+  function download(blob, name) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click();
+    setTimeout(() => { a.remove(); URL.revokeObjectURL(url); }, 4000);
+  }
+  function exportData() {
+    persist();
+    const payload = { app: 'abhisaran-field-form', version: 1, exportedAt: new Date().toISOString(), records };
+    download(new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' }), `abhisaran-backup-${todayISO()}.json`);
+    toast(`Backup downloaded (${records.length} record${records.length === 1 ? '' : 's'}).`);
+  }
+  function importFile(file) {
+    const reader = new FileReader();
+    reader.onload = () => {
+      let list;
+      try {
+        const d = JSON.parse(reader.result);
+        list = Array.isArray(d) ? d : d.records;
+        if (!Array.isArray(list) || !list.length || !list.every(x => x && typeof x === 'object')) throw new Error('bad');
+        list = list.map(normRecord);
+      } catch (e) { toast('That file is not a valid ABHISARAN backup.', 5000); return; }
+      modal({
+        title: `Import ${list.length} record${list.length === 1 ? '' : 's'}?`,
+        body: 'Add them after your current records, or replace everything with the backup.',
+        actions: [
+          { label: 'Cancel' },
+          {
+            label: 'Add to existing', fn: () => {
+              list.forEach(r => { r.id = uid(); records.push(r); });
+              switchTo(records[records.length - list.length].id, true); persist(); toast('Records added.');
+            }
+          },
+          {
+            label: 'Replace all', cls: 'danger', fn: () => {
+              records = list; currentId = records[0].id; section = 0; curQ = 1;
+              renderAll(); persist(); window.scrollTo({ top: 0 }); toast('Backup restored.');
+            }
+          }]
+      });
+    };
+    reader.onerror = () => toast('Could not read that file.');
+    reader.readAsText(file);
+  }
+
+  /* ------------------------------------------------------------------ pdf */
+  function safeName(s) { return String(s || '').replace(/[^A-Za-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40); }
+  function pdfCurrent() {
+    try {
+      persist();
+      const i = recIndex(), r = rec();
+      const bytes = PDFW.buildPdf([r], { nums: [i + 1], total: records.length });
+      PDFW.download(bytes, `ABHISARAN_Record-${i + 1}${r.village ? '_' + safeName(r.village) : ''}_${todayISO()}.pdf`);
+      toast(`PDF created for Village Record ${i + 1}.`);
+    } catch (e) { console.error(e); toast('Could not create the PDF: ' + e.message, 6000); }
+  }
+  function pdfAll() {
+    try {
+      persist();
+      const bytes = PDFW.buildPdf(records, { total: records.length });
+      PDFW.download(bytes, `ABHISARAN_All-${records.length}-Records_${todayISO()}.pdf`);
+      toast(`One PDF created with ${records.length} record${records.length === 1 ? '' : 's'}.`);
+    } catch (e) { console.error(e); toast('Could not create the PDF: ' + e.message, 6000); }
+  }
+
+  /* --------------------------------------------------------------- search */
+  function runSearch() {
+    const q = $('#search').value.trim().toLowerCase();
+    const box = $('#results');
+    if (!q) { box.hidden = true; return; }
+    const num = q.replace(/^q/, '');
+    const hits = QUESTIONS.filter(x =>
+      (/^\d+$/.test(num) && String(x.n) === num) ||
+      x.text.toLowerCase().includes(q) || (x.hint || '').toLowerCase().includes(q) ||
+      x.fields.some(f => (f.label || '').toLowerCase().includes(q))
+    ).slice(0, 10);
+    box.innerHTML = hits.length
+      ? hits.map(x => `<button data-goto="${x.n}"><b>Q${x.n}</b><span>${esc(x.text)}</span><small>${SECTIONS[x.s].id}</small></button>`).join('')
+      : '<div class="none">No matching question.</div>';
+    box.hidden = false;
+  }
+
+  /* ---------------------------------------------------------------- menus */
+  function closeMenus() {
+    ['pdf', 'more'].forEach(k => { $('#' + k + 'Menu').hidden = true; $('#' + k + 'Btn').setAttribute('aria-expanded', 'false'); });
+  }
+  function toggleMenu(k) {
+    const m = $('#' + k + 'Menu'), was = !m.hidden;
+    closeMenus();
+    if (!was) { m.hidden = false; $('#' + k + 'Btn').setAttribute('aria-expanded', 'true'); }
+  }
+
+  function act(name) {
+    closeMenus();
+    switch (name) {
+      case 'pdf-current': return pdfCurrent();
+      case 'pdf-all': return pdfAll();
+      case 'add': return addRecord();
+      case 'duplicate': return duplicateRecord();
+      case 'export': return exportData();
+      case 'import': return $('#importFile').click();
+      case 'delete': return deleteRecord();
+      case 'clear': return clearCurrent();
+      case 'clearall': return clearAll();
+    }
+  }
+
+  /* ----------------------------------------------------------------- init */
+  function init() {
+    if (!load()) { const r = blankRecord(); records = [r]; currentId = r.id; section = 0; }
+    try { localStorage.setItem(KEY + '_probe', '1'); localStorage.removeItem(KEY + '_probe'); storageOk = true; } catch (e) { storageOk = false; }
+    $('#banner').hidden = storageOk;
+    if (storageOk) persist(); else setStatus('error');
+    renderAll();
+
+    $('#form').addEventListener('input', onInput);
+    $('#form').addEventListener('click', onOptClick);
+    $('#form').addEventListener('focusin', e => {
+      const c = e.target.closest('.qcard');
+      if (c && +c.dataset.n !== curQ) { curQ = +c.dataset.n; updateStrip(); }
+    });
+
+    $('#hdrDate').addEventListener('input', e => { rec().date = e.target.value; scheduleSave(); });
+    $('#hdrVillage').addEventListener('input', e => {
+      const v = e.target.value, r = rec();
+      r.village = v;
+      if (v) r.answers.question1.village = v; else delete r.answers.question1.village;
+      const q1 = $('#q1-village'); if (q1 && q1.value !== v) q1.value = v;
+      scheduleSave(); updateChrome();
+    });
+
+    $('#tabs').addEventListener('click', e => { const b = e.target.closest('.tab'); if (b && b.dataset.id !== rec().id) switchTo(b.dataset.id, false); });
+    $('#navList').addEventListener('click', e => { const b = e.target.closest('[data-sec]'); if (b) setSection(+b.dataset.sec); });
+    $('#jump').addEventListener('change', e => setSection(+e.target.value));
+    $('#prevBtn').addEventListener('click', () => setSection(section - 1));
+    $('#nextBtn').addEventListener('click', () => setSection(section + 1));
+    $('#saveBtn').addEventListener('click', () => { persist(); toast(storageOk ? 'Saved on this device.' : 'Could not save automatically – use Export Data.'); });
+    $('#pdfBtn').addEventListener('click', e => { e.stopPropagation(); toggleMenu('pdf'); });
+    $('#moreBtn').addEventListener('click', e => { e.stopPropagation(); toggleMenu('more'); });
+    document.addEventListener('click', e => {
+      const a = e.target.closest('[data-act]');
+      if (a) { act(a.dataset.act); return; }
+      if (!e.target.closest('.pop')) closeMenus();
+      const g = e.target.closest('[data-goto]');
+      if (g) { $('#results').hidden = true; $('#search').value = ''; goQ(+g.dataset.goto); return; }
+      if (!e.target.closest('.searchbox')) $('#results').hidden = true;
+    });
+    $('#search').addEventListener('input', runSearch);
+    $('#search').addEventListener('keydown', e => { if (e.key === 'Escape') { $('#results').hidden = true; e.target.value = ''; } if (e.key === 'Enter') { const f = $('#results [data-goto]'); if (f) f.click(); } });
+    $('#importFile').addEventListener('change', e => { const f = e.target.files[0]; e.target.value = ''; if (f) importFile(f); });
+    window.addEventListener('scroll', onScroll, { passive: true });
+
+    const flush = () => { if (dirty) persist(); };
+    window.addEventListener('beforeunload', e => {
+      flush();
+      if (dirty || !storageOk) { e.preventDefault(); e.returnValue = ''; }
+    });
+    window.addEventListener('pagehide', flush);
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flush(); });
+  }
+
+  init();
+})();
+
+</script>
+</body>
+</html>

@@ -111,6 +111,27 @@ export const DashboardOverviewScreen: React.FC<DashboardOverviewScreenProps> = (
   const [showBulkModal, setShowBulkModal] = useState<boolean>(false);
   const [isBulkExecuting, setIsBulkExecuting] = useState<boolean>(false);
   const [bulkResponse, setBulkResponse] = useState<BulkAnalyseResponse | null>(null);
+  const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
+
+  // Single location scoring handler
+  const handleExecuteSingleAnalyse = async (locationId: string) => {
+    setIsBulkExecuting(true);
+    try {
+      const res = await fetch(`/api/v1/scoring/${locationId}/analyse`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.error || `Scoring failed with HTTP ${res.status}`);
+      }
+      await loadDashboard(page);
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Scoring analysis failed.');
+    } finally {
+      setIsBulkExecuting(false);
+    }
+  };
 
   // Load initial dropdown options
   useEffect(() => {
@@ -512,7 +533,28 @@ export const DashboardOverviewScreen: React.FC<DashboardOverviewScreenProps> = (
               </span>
             )}
           </div>
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+            {/* View Mode Toggle */}
+            <div className="view-mode-toggle">
+              <button
+                type="button"
+                className={`view-mode-btn ${viewMode === 'cards' ? 'active' : ''}`}
+                onClick={() => setViewMode('cards')}
+                title="Cards View"
+              >
+                🃏 Location Cards
+              </button>
+              <button
+                type="button"
+                className={`view-mode-btn ${viewMode === 'table' ? 'active' : ''}`}
+                onClick={() => setViewMode('table')}
+                title="Table View"
+              >
+                📋 Table View
+              </button>
+            </div>
+
             <button
               type="button"
               className="btn btn-secondary"
@@ -546,6 +588,163 @@ export const DashboardOverviewScreen: React.FC<DashboardOverviewScreenProps> = (
           ) : locations.length === 0 ? (
             <div style={{ padding: '48px 20px', textAlign: 'center', color: 'var(--muted)' }}>
               No facilities found matching the specified filters.
+            </div>
+          ) : viewMode === 'cards' ? (
+            <div className="location-cards-grid">
+              {locations.map((loc) => {
+                const isAnalysed = loc.status === 'ANALYSED';
+                const isSelected = selectedLocationIds.includes(loc.id);
+                const isReady = loc.status === 'READY_FOR_ANALYSIS';
+                const bandClass = getBandClass(loc.latestAlertBand);
+
+                return (
+                  <div
+                    key={loc.id}
+                    className={`pilot-location-card ${isSelected ? 'selected' : ''} ${bandClass ? bandClass : loc.status.toLowerCase()}`}
+                  >
+                    {/* Header */}
+                    <div className="location-card-header">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <input
+                          type="checkbox"
+                          className="card-checkbox"
+                          checked={isSelected}
+                          onChange={() => handleToggleSelectLocation(loc.id)}
+                          title="Select for bulk actions"
+                        />
+                        <span
+                          className="facility-code-pill"
+                          onClick={() => {
+                            if (isAnalysed && loc.latestRunId) {
+                              onViewAnalysis(loc.id, loc.latestRunId);
+                            } else {
+                              onGoToAudit(loc.id);
+                            }
+                          }}
+                          title="Click to open"
+                        >
+                          {loc.code}
+                        </span>
+                        {loc.isDemo && (
+                          <span style={{ fontSize: '10px', color: 'var(--muted)' }}>[Demo]</span>
+                        )}
+                      </div>
+                      <span className={`status-pill ${getStatusClass(loc.status)}`}>
+                        {loc.status.replace(/_/g, ' ')}
+                      </span>
+                    </div>
+
+                    {/* Facility Type & Geography */}
+                    <div className="location-card-meta">
+                      <div className="location-type-badge">
+                        <span className="type-icon">
+                          {loc.domain === 'Education' ? '🏫' : loc.domain === 'Health' ? '🏥' : loc.domain === 'Nutrition' ? '👶' : '🌾'}
+                        </span>
+                        <span className="type-title">{loc.typeLabel || loc.typePrefix || 'Facility'}</span>
+                        <span className="domain-tag">({loc.domain || 'Pilot'})</span>
+                      </div>
+
+                      <div className="geo-tag">
+                        <span>📍 <b>{loc.districtName || 'Pilot District'}</b></span>
+                        {loc.blockName && <span> &middot; {loc.blockName} Block</span>}
+                      </div>
+                    </div>
+
+                    {/* Fancy Score Showcase / Status Body */}
+                    <div className="location-card-body">
+                      {isAnalysed && loc.latestAcsScore != null ? (
+                        <div className="score-showcase-box">
+                          <div className="score-display">
+                            <div className={`score-badge ${bandClass}`}>
+                              <span className="score-num">{loc.latestAcsScore.toFixed(1)}</span>
+                              <span className="score-denom">/100</span>
+                            </div>
+                            <div className="score-meta">
+                              <div className={`band-label ${bandClass}`}>
+                                {loc.latestAlertBand === 'GREEN' || loc.latestAlertBand === 'DARK_GREEN' ? '🟢 Optimal Continuity' : loc.latestAlertBand === 'AMBER' || loc.latestAlertBand === 'ORANGE' ? '🟡 At Risk' : '🔴 Critical Risk'}
+                              </div>
+                              {loc.latestIsProvisional && (
+                                <span className="provisional-pill" title="Coverage < 70%">⚠️ Provisional</span>
+                              )}
+                              {loc.lastAnalysedAt && (
+                                <span className="time-subtext">Scored {new Date(loc.lastAnalysedAt).toLocaleDateString()}</span>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="red-flags-indicator">
+                            {loc.latestRedFlagsCount > 0 ? (
+                              <span className="flags-pill danger">🚨 {loc.latestRedFlagsCount} Red Flag{loc.latestRedFlagsCount === 1 ? '' : 's'}</span>
+                            ) : (
+                              <span className="flags-pill clean">✓ 0 Red Flags</span>
+                            )}
+                          </div>
+                        </div>
+                      ) : isReady ? (
+                        <div className="ready-showcase-box">
+                          <div className="ready-indicator">
+                            <span className="ready-icon">⏳</span>
+                            <div>
+                              <div className="ready-title">Field Audit Submitted</div>
+                              <div className="ready-subtext">Locked &amp; ready for scoring engine</div>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            className="btn single-analyse-btn"
+                            onClick={() => handleExecuteSingleAnalyse(loc.id)}
+                            disabled={isBulkExecuting}
+                          >
+                            ⚡ Run Scoring Engine
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="draft-showcase-box">
+                          <div className="draft-progress-row">
+                            <span className="pages-count">📄 {loc.pageCount} Audit Page{loc.pageCount === 1 ? '' : 's'}</span>
+                            <span className="draft-tag">{loc.status === 'DRAFT' || loc.status === 'REOPENED' ? 'In Collection' : 'Registered'}</span>
+                          </div>
+                          <div className="draft-hint">
+                            {loc.status === 'DRAFT' || loc.status === 'REOPENED'
+                              ? 'Field baseline collection actively under way.'
+                              : 'Facility code allocated. Ready for field audit.'}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Card Footer Actions */}
+                    <div className="location-card-footer">
+                      {isAnalysed ? (
+                        <>
+                          <button
+                            type="button"
+                            className="btn btn-primary card-action-btn"
+                            onClick={() => onViewAnalysis(loc.id, loc.latestRunId || undefined)}
+                          >
+                            📊 ACS Report
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn-secondary card-action-btn"
+                            onClick={() => onGoToAudit(loc.id)}
+                          >
+                            📋 Audit Form
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          type="button"
+                          className="btn btn-secondary card-action-btn full-width"
+                          onClick={() => onGoToAudit(loc.id)}
+                        >
+                          📋 {isReady ? 'Review Audit Form' : 'Open Field Audit'}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           ) : (
             <table className="dashboard-table">

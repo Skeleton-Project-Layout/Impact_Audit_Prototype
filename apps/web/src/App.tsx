@@ -22,6 +22,7 @@ export const App: React.FC = () => {
     'overview' | 'dashboard' | 'geography' | 'facilities' | 'questions' | 'rubric-tester' | 'rubric-review' | 'audit' | 'analysis' | 'officers' | 'audit-log'
   >('overview');
   const [testerQuestionId, setTesterQuestionId] = useState<string | undefined>(undefined);
+  const [showAdminTools, setShowAdminTools] = useState<boolean>(false);
   const [auditLocationId, setAuditLocationId] = useState<string | undefined>(undefined);
   const [analysisLocationId, setAnalysisLocationId] = useState<string | undefined>(undefined);
   const [officerView, setOfficerView] = useState<'inbox' | 'analysis'>('inbox');
@@ -108,7 +109,7 @@ export const App: React.FC = () => {
           </div>
 
           {currentUser.role === 'ADMIN' && (
-            <nav style={{ display: 'flex', gap: '2px', flexWrap: 'wrap' }}>
+            <nav style={{ display: 'flex', gap: '6px', alignItems: 'center', position: 'relative' }}>
               <button
                 type="button"
                 onClick={() => setAdminView('overview')}
@@ -118,13 +119,13 @@ export const App: React.FC = () => {
                   color: adminView === 'overview' ? 'var(--accent)' : 'var(--muted)',
                   fontWeight: adminView === 'overview' ? 600 : 500,
                   fontSize: '13px',
-                  padding: '6px 10px',
+                  padding: '6px 12px',
                   border: 'none',
                   borderRadius: '6px',
                   cursor: 'pointer'
                 }}
               >
-                Overview
+                🏠 Home
               </button>
 
               <button
@@ -136,103 +137,13 @@ export const App: React.FC = () => {
                   color: adminView === 'dashboard' ? 'var(--accent)' : 'var(--muted)',
                   fontWeight: adminView === 'dashboard' ? 600 : 500,
                   fontSize: '13px',
-                  padding: '6px 10px',
+                  padding: '6px 12px',
                   border: 'none',
                   borderRadius: '6px',
                   cursor: 'pointer'
                 }}
               >
                 📊 Dashboard
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setAdminView('geography')}
-                className="btn"
-                style={{
-                  background: adminView === 'geography' ? 'var(--surface-2)' : 'transparent',
-                  color: adminView === 'geography' ? 'var(--accent)' : 'var(--muted)',
-                  fontWeight: adminView === 'geography' ? 600 : 500,
-                  fontSize: '13px',
-                  padding: '6px 10px',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: 'pointer'
-                }}
-              >
-                Geography
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setAdminView('facilities')}
-                className="btn"
-                style={{
-                  background: adminView === 'facilities' ? 'var(--surface-2)' : 'transparent',
-                  color: adminView === 'facilities' ? 'var(--accent)' : 'var(--muted)',
-                  fontWeight: adminView === 'facilities' ? 600 : 500,
-                  fontSize: '13px',
-                  padding: '6px 10px',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: 'pointer'
-                }}
-              >
-                Facilities
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setAdminView('questions')}
-                className="btn"
-                style={{
-                  background: adminView === 'questions' ? 'var(--surface-2)' : 'transparent',
-                  color: adminView === 'questions' ? 'var(--accent)' : 'var(--muted)',
-                  fontWeight: adminView === 'questions' ? 600 : 500,
-                  fontSize: '13px',
-                  padding: '6px 10px',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: 'pointer'
-                }}
-              >
-                Question Bank
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleOpenRubricTester()}
-                className="btn"
-                style={{
-                  background: adminView === 'rubric-tester' ? 'var(--surface-2)' : 'transparent',
-                  color: adminView === 'rubric-tester' ? 'var(--accent)' : 'var(--muted)',
-                  fontWeight: adminView === 'rubric-tester' ? 600 : 500,
-                  fontSize: '13px',
-                  padding: '6px 10px',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: 'pointer'
-                }}
-              >
-                ⚡ Rubric Sandbox
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setAdminView('rubric-review')}
-                className="btn"
-                style={{
-                  background: adminView === 'rubric-review' ? 'var(--surface-2)' : 'transparent',
-                  color: adminView === 'rubric-review' ? 'var(--accent)' : 'var(--muted)',
-                  fontWeight: adminView === 'rubric-review' ? 600 : 500,
-                  fontSize: '13px',
-                  padding: '6px 10px',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: 'pointer'
-                }}
-              >
-                🛡️ Rubric Review
               </button>
 
               <button
@@ -247,7 +158,7 @@ export const App: React.FC = () => {
                   color: 'var(--muted)',
                   fontWeight: 500,
                   fontSize: '13px',
-                  padding: '6px 10px',
+                  padding: '6px 12px',
                   border: 'none',
                   borderRadius: '6px',
                   cursor: 'pointer'
@@ -256,59 +167,108 @@ export const App: React.FC = () => {
                 📋 Field Audit
               </button>
 
-              <button
-                type="button"
-                onClick={() => setAdminView('analysis')}
-                className="btn"
-                style={{
-                  background: adminView === 'analysis' ? 'var(--surface-2)' : 'transparent',
-                  color: adminView === 'analysis' ? 'var(--accent)' : 'var(--muted)',
-                  fontWeight: adminView === 'analysis' ? 600 : 500,
-                  fontSize: '13px',
-                  padding: '6px 10px',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: 'pointer'
-                }}
-              >
-                📊 Analysis
-              </button>
+              {/* Secondary Admin Tools Dropdown */}
+              <div style={{ position: 'relative' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowAdminTools(!showAdminTools)}
+                  className="btn"
+                  style={{
+                    background: ['geography', 'facilities', 'questions', 'rubric-tester', 'rubric-review', 'officers', 'audit-log'].includes(adminView) ? 'var(--surface-2)' : 'transparent',
+                    color: ['geography', 'facilities', 'questions', 'rubric-tester', 'rubric-review', 'officers', 'audit-log'].includes(adminView) ? 'var(--accent)' : 'var(--muted)',
+                    fontWeight: 500,
+                    fontSize: '13px',
+                    padding: '6px 12px',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}
+                >
+                  ⚙️ Admin Tools ▾
+                </button>
 
-              <button
-                type="button"
-                onClick={() => setAdminView('officers')}
-                className="btn"
-                style={{
-                  background: adminView === 'officers' ? 'var(--surface-2)' : 'transparent',
-                  color: adminView === 'officers' ? 'var(--accent)' : 'var(--muted)',
-                  fontWeight: adminView === 'officers' ? 600 : 500,
-                  fontSize: '13px',
-                  padding: '6px 10px',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: 'pointer'
-                }}
-              >
-                🏛️ Officers
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setAdminView('audit-log')}
-                className="btn"
-                style={{
-                  background: adminView === 'audit-log' ? 'var(--surface-2)' : 'transparent',
-                  color: adminView === 'audit-log' ? 'var(--accent)' : 'var(--muted)',
-                  fontWeight: adminView === 'audit-log' ? 600 : 500,
-                  fontSize: '13px',
-                  padding: '6px 10px',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: 'pointer'
-                }}
-              >
-                🛡️ Audit Log
-              </button>
+                {showAdminTools && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: 'calc(100% + 6px)',
+                      left: 0,
+                      background: 'var(--surface)',
+                      border: '1px solid var(--line)',
+                      borderRadius: '10px',
+                      boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)',
+                      minWidth: '220px',
+                      zIndex: 100,
+                      padding: '6px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '2px'
+                    }}
+                    onMouseLeave={() => setShowAdminTools(false)}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => { setAdminView('geography'); setShowAdminTools(false); }}
+                      style={{ textAlign: 'left', padding: '8px 12px', background: 'none', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', color: 'var(--ink)' }}
+                    >
+                      🗺️ Geography Management
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setAdminView('facilities'); setShowAdminTools(false); }}
+                      style={{ textAlign: 'left', padding: '8px 12px', background: 'none', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', color: 'var(--ink)' }}
+                    >
+                      🏫 Facility Registry
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setAdminView('questions'); setShowAdminTools(false); }}
+                      style={{ textAlign: 'left', padding: '8px 12px', background: 'none', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', color: 'var(--ink)' }}
+                    >
+                      📚 Question Bank & Versioning
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { handleOpenRubricTester(); setShowAdminTools(false); }}
+                      style={{ textAlign: 'left', padding: '8px 12px', background: 'none', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', color: 'var(--ink)' }}
+                    >
+                      ⚡ Rubric Sandbox
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setAdminView('rubric-review'); setShowAdminTools(false); }}
+                      style={{ textAlign: 'left', padding: '8px 12px', background: 'none', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', color: 'var(--ink)' }}
+                    >
+                      🛡️ Rubric Review & Governance
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setAdminView('analysis'); setShowAdminTools(false); }}
+                      style={{ textAlign: 'left', padding: '8px 12px', background: 'none', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', color: 'var(--ink)' }}
+                    >
+                      📊 Continuity Analysis & Ledger
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setAdminView('officers'); setShowAdminTools(false); }}
+                      style={{ textAlign: 'left', padding: '8px 12px', background: 'none', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', color: 'var(--ink)' }}
+                    >
+                      🏛️ District Officers
+                    </button>
+                    <hr style={{ border: 'none', borderTop: '1px solid var(--line)', margin: '4px 0' }} />
+                    <button
+                      type="button"
+                      onClick={() => { setAdminView('audit-log'); setShowAdminTools(false); }}
+                      style={{ textAlign: 'left', padding: '8px 12px', background: 'none', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', color: 'var(--ink)' }}
+                    >
+                      🛡️ Security Audit Log
+                    </button>
+                  </div>
+                )}
+              </div>
             </nav>
           )}
 
@@ -400,244 +360,143 @@ export const App: React.FC = () => {
           <div>
             {adminView === 'overview' && (
               <div>
-                <h1 style={{ fontSize: '24px', fontWeight: 700, marginBottom: '8px', color: 'var(--ink)' }}>
-                  Admin Home
-                </h1>
-                <p style={{ color: 'var(--muted)', marginBottom: '32px' }}>
-                  Field audit coordination, pilot location registry, and scoring decision support.
-                </p>
+                <div style={{ marginBottom: '28px', textAlign: 'center' }}>
+                  <h1 style={{ fontSize: '28px', fontWeight: 800, marginBottom: '8px', color: 'var(--ink)' }}>
+                    ABHISARAN Command Portal
+                  </h1>
+                  <p style={{ color: 'var(--muted)', fontSize: '15px', maxWidth: '640px', margin: '0 auto' }}>
+                    Standardized village baseline assessments, deterministic continuity scoring, and real-time pilot monitoring.
+                  </p>
+                </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
-                  <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: 'var(--accent-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)', fontWeight: 700 }}>
-                        🗺️
-                      </div>
-                      <div>
-                        <h2 style={{ fontSize: '18px', fontWeight: 600 }}>Geography Management</h2>
-                        <span style={{ fontSize: '13px', color: 'var(--muted)' }}>Jharkhand & 4 pilot districts</span>
-                      </div>
-                    </div>
-                    <p style={{ fontSize: '14px', color: 'var(--muted)', flex: 1 }}>
-                      Inspect administrative hierarchy (Districts, Blocks, Panchayats), add new local blocks and Gram Panchayats.
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => setAdminView('geography')}
-                      className="btn btn-secondary"
-                      style={{ width: '100%' }}
-                    >
-                      Manage Geography
-                    </button>
-                  </div>
-
-                  <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: 'var(--accent-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)', fontWeight: 700 }}>
-                        🏫
-                      </div>
-                      <div>
-                        <h2 style={{ fontSize: '18px', fontWeight: 600 }}>Facility Registry</h2>
-                        <span style={{ fontSize: '13px', color: 'var(--muted)' }}>Allocate permanent facility codes</span>
-                      </div>
-                    </div>
-                    <p style={{ fontSize: '14px', color: 'var(--muted)', flex: 1 }}>
-                      Register Schools, Anganwadis, and Health Centres with deterministic, non-recyclable codes or bulk upload via CSV.
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => setAdminView('facilities')}
-                      className="btn btn-secondary"
-                      style={{ width: '100%' }}
-                    >
-                      Open Facility Registry
-                    </button>
-                  </div>
-
-                  <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: 'var(--accent-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)', fontWeight: 700 }}>
-                        📚
-                      </div>
-                      <div>
-                        <h2 style={{ fontSize: '18px', fontWeight: 600 }}>Question Bank & Versioning</h2>
-                        <span style={{ fontSize: '13px', color: 'var(--muted)' }}>72 Seeded Canonical Questions</span>
-                      </div>
-                    </div>
-                    <p style={{ fontSize: '14px', color: 'var(--muted)', flex: 1 }}>
-                      Browse domain questions, inspect JSON schemas, review audit history, or bump questions to version N+1.
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => setAdminView('questions')}
-                      className="btn btn-secondary"
-                      style={{ width: '100%' }}
-                    >
-                      Open Question Bank
-                    </button>
-                  </div>
-
-                  <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: 'var(--accent-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)', fontWeight: 700 }}>
-                        ⚡
-                      </div>
-                      <div>
-                        <h2 style={{ fontSize: '18px', fontWeight: 600 }}>Rubric Sandbox</h2>
-                        <span style={{ fontSize: '13px', color: 'var(--muted)' }}>Deterministic Mathematical Engine</span>
-                      </div>
-                    </div>
-                    <p style={{ fontSize: '14px', color: 'var(--muted)', flex: 1 }}>
-                      Live simulation for all 7 rubric types, alert spectrums (Red to Green), Section 9.5 clamping, and red flag rules.
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => handleOpenRubricTester()}
-                      className="btn btn-secondary"
-                      style={{ width: '100%' }}
-                    >
-                      Launch Rubric Sandbox
-                    </button>
-                  </div>
-
-                  <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: 'var(--accent-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)', fontWeight: 700 }}>
-                        🛡️
-                      </div>
-                      <div>
-                        <h2 style={{ fontSize: '18px', fontWeight: 600 }}>Rubric Review & Governance</h2>
-                        <span style={{ fontSize: '13px', color: 'var(--muted)' }}>Section 8 Owner Review Sign-off</span>
-                      </div>
-                    </div>
-                    <p style={{ fontSize: '14px', color: 'var(--muted)', flex: 1 }}>
-                      Approve pending rubrics in bulk or individually before audit campaigns launch into field deployment.
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => setAdminView('rubric-review')}
-                      className="btn btn-primary"
-                      style={{ width: '100%' }}
-                    >
-                      Review & Approve Rubrics
-                    </button>
-                  </div>
-
-                  <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: 'var(--accent-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)', fontWeight: 700 }}>
+                {/* EXACTLY TWO PRIMARY CARDS ON ADMIN HOME */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '28px', maxWidth: '960px', margin: '0 auto' }}>
+                  {/* Card 1: Open Field Audit Form */}
+                  <div
+                    className="card"
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      padding: '36px 30px',
+                      borderRadius: '16px',
+                      border: '1px solid var(--line)',
+                      background: 'var(--surface)',
+                      boxShadow: '0 4px 20px rgba(0, 0, 0, 0.05)',
+                      position: 'relative',
+                      overflow: 'hidden'
+                    }}
+                  >
+                    <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '5px', background: 'linear-gradient(135deg, #0b6b5c, #10b981)' }} />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '16px' }}>
+                      <div style={{ width: '56px', height: '56px', borderRadius: '12px', background: 'var(--accent-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '28px' }}>
                         📋
                       </div>
                       <div>
-                        <h2 style={{ fontSize: '18px', fontWeight: 600 }}>Field Audit Workspace</h2>
-                        <span style={{ fontSize: '13px', color: 'var(--muted)' }}>Phase 4 Campaign Deployment</span>
+                        <h2 style={{ fontSize: '20px', fontWeight: 700, color: 'var(--ink)' }}>Field Audit Form</h2>
+                        <span style={{ fontSize: '13px', color: 'var(--accent)', fontWeight: 600 }}>Village Baseline &amp; Impact Assessment</span>
                       </div>
                     </div>
-                    <p style={{ fontSize: '14px', color: 'var(--muted)', flex: 1 }}>
-                      Conduct multi-page field assessments with offline autosave, per-question evidence attachments, and ACS computation.
+
+                    <p style={{ fontSize: '14px', color: 'var(--muted)', lineHeight: '1.6', flex: 1, marginBottom: '24px' }}>
+                      Conduct standardized field assessments with all 67 questions across 7 domain sections (Village Profile, School, Anganwadi, PHC, Community, Physical Verification, Summary). Features offline autosave, multi-page record tabs, instant question search, and certified PDF downloads.
                     </p>
+
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '24px' }}>
+                      <span style={{ fontSize: '12px', padding: '4px 10px', borderRadius: '999px', background: 'var(--surface-2)', border: '1px solid var(--line)', color: 'var(--muted)' }}>
+                        ✓ 67 Standardized Questions
+                      </span>
+                      <span style={{ fontSize: '12px', padding: '4px 10px', borderRadius: '999px', background: 'var(--surface-2)', border: '1px solid var(--line)', color: 'var(--muted)' }}>
+                        ✓ Offline Autosave
+                      </span>
+                      <span style={{ fontSize: '12px', padding: '4px 10px', borderRadius: '999px', background: 'var(--surface-2)', border: '1px solid var(--line)', color: 'var(--muted)' }}>
+                        ✓ A4 PDF Generation
+                      </span>
+                    </div>
+
                     <button
                       type="button"
                       className="btn btn-primary"
-                      style={{ width: '100%' }}
+                      style={{
+                        width: '100%',
+                        padding: '14px 20px',
+                        fontSize: '15px',
+                        fontWeight: 700,
+                        background: 'linear-gradient(135deg, #0b6b5c, #10b981)',
+                        border: 'none',
+                        borderRadius: '10px',
+                        color: '#ffffff',
+                        cursor: 'pointer',
+                        boxShadow: '0 2px 8px rgba(11, 107, 92, 0.25)'
+                      }}
                       onClick={() => {
                         setAuditLocationId(undefined);
                         setAdminView('audit');
                       }}
                     >
-                      Open Field Audit Workspace
+                      Open Field Audit Form &rarr;
                     </button>
                   </div>
 
-                  <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: 'var(--accent-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)', fontWeight: 700 }}>
+                  {/* Card 2: View Dashboard */}
+                  <div
+                    className="card"
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      padding: '36px 30px',
+                      borderRadius: '16px',
+                      border: '1px solid var(--line)',
+                      background: 'var(--surface)',
+                      boxShadow: '0 4px 20px rgba(0, 0, 0, 0.05)',
+                      position: 'relative',
+                      overflow: 'hidden'
+                    }}
+                  >
+                    <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '5px', background: 'linear-gradient(135deg, #1d4ed8, #3b82f6)' }} />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '16px' }}>
+                      <div style={{ width: '56px', height: '56px', borderRadius: '12px', background: 'rgba(59, 130, 246, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '28px' }}>
                         📊
                       </div>
                       <div>
-                        <h2 style={{ fontSize: '18px', fontWeight: 600 }}>Continuity Analysis & Ledger</h2>
-                        <span style={{ fontSize: '13px', color: 'var(--muted)' }}>Deterministic ACS Scoring Engine</span>
+                        <h2 style={{ fontSize: '20px', fontWeight: 700, color: 'var(--ink)' }}>Executive Dashboard</h2>
+                        <span style={{ fontSize: '13px', color: '#2563eb', fontWeight: 600 }}>Pilot Facilities &amp; Continuity Monitoring</span>
                       </div>
                     </div>
-                    <p style={{ fontSize: '14px', color: 'var(--muted)', flex: 1 }}>
-                      Audit Continuity Score (ACS) evaluation, strict deduction waterfall balance assertion, provisional alerts, and rubric trails.
-                    </p>
-                    <button
-                      type="button"
-                      className="btn btn-secondary"
-                      style={{ width: '100%' }}
-                      onClick={() => setAdminView('analysis')}
-                    >
-                      Open Continuity Analysis
-                    </button>
-                  </div>
 
-                  <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: 'var(--accent-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)', fontWeight: 700 }}>
-                        🏛️
-                      </div>
-                      <div>
-                        <h2 style={{ fontSize: '18px', fontWeight: 600 }}>Officer Scoping & Delivery</h2>
-                        <span style={{ fontSize: '13px', color: 'var(--muted)' }}>Multi-District RBAC & Auto-Delivery</span>
-                      </div>
-                    </div>
-                    <p style={{ fontSize: '14px', color: 'var(--muted)', flex: 1 }}>
-                      Register government officers, assign multi-district scopes, manage automated ACS deliveries and back-fill past runs.
+                    <p style={{ fontSize: '14px', color: 'var(--muted)', lineHeight: '1.6', flex: 1, marginBottom: '24px' }}>
+                      Inspect pilot location cards across East Khasi Hills and Jharkhand. Monitor deterministic Audit Continuity Scores (ACS), alert bands (Green, Amber, Red), identify critical operational red flags, and run automated scoring analysis.
                     </p>
-                    <button
-                      type="button"
-                      className="btn btn-secondary"
-                      style={{ width: '100%' }}
-                      onClick={() => setAdminView('officers')}
-                    >
-                      Manage Officers
-                    </button>
-                  </div>
 
-                  <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: 'var(--accent-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)', fontWeight: 700 }}>
-                        📊
-                      </div>
-                      <div>
-                        <h2 style={{ fontSize: '18px', fontWeight: 600 }}>Administrative Overview</h2>
-                        <span style={{ fontSize: '13px', color: 'var(--muted)' }}>Non-Ranking Table & Bulk Scoring</span>
-                      </div>
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '24px' }}>
+                      <span style={{ fontSize: '12px', padding: '4px 10px', borderRadius: '999px', background: 'var(--surface-2)', border: '1px solid var(--line)', color: 'var(--muted)' }}>
+                        ✓ Pilot Location Cards
+                      </span>
+                      <span style={{ fontSize: '12px', padding: '4px 10px', borderRadius: '999px', background: 'var(--surface-2)', border: '1px solid var(--line)', color: 'var(--muted)' }}>
+                        ✓ ACS Score Spectrum
+                      </span>
+                      <span style={{ fontSize: '12px', padding: '4px 10px', borderRadius: '999px', background: 'var(--surface-2)', border: '1px solid var(--line)', color: 'var(--muted)' }}>
+                        ✓ Bulk Evaluation Engine
+                      </span>
                     </div>
-                    <p style={{ fontSize: '14px', color: 'var(--muted)', flex: 1 }}>
-                      Executive facility status counts, non-ranking code-sorted compliance table, and bulk analysis execution with officer delivery.
-                    </p>
+
                     <button
                       type="button"
-                      className="btn btn-primary"
-                      style={{ width: '100%' }}
+                      className="btn"
+                      style={{
+                        width: '100%',
+                        padding: '14px 20px',
+                        fontSize: '15px',
+                        fontWeight: 700,
+                        background: 'linear-gradient(135deg, #1d4ed8, #2563eb)',
+                        border: 'none',
+                        borderRadius: '10px',
+                        color: '#ffffff',
+                        cursor: 'pointer',
+                        boxShadow: '0 2px 8px rgba(37, 99, 235, 0.25)'
+                      }}
                       onClick={() => setAdminView('dashboard')}
                     >
-                      Open Executive Dashboard
-                    </button>
-                  </div>
-
-                  <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: 'var(--accent-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)', fontWeight: 700 }}>
-                        🛡️
-                      </div>
-                      <div>
-                        <h2 style={{ fontSize: '18px', fontWeight: 600 }}>Security Audit Log</h2>
-                        <span style={{ fontSize: '13px', color: 'var(--muted)' }}>Append-Only Immutable Event Journal</span>
-                      </div>
-                    </div>
-                    <p style={{ fontSize: '14px', color: 'var(--muted)', flex: 1 }}>
-                      Review complete tamper-evident audit records across authentication, rubric changes, scoring executions, and IP addresses.
-                    </p>
-                    <button
-                      type="button"
-                      className="btn btn-secondary"
-                      style={{ width: '100%' }}
-                      onClick={() => setAdminView('audit-log')}
-                    >
-                      View Audit Log
+                      View Dashboard &rarr;
                     </button>
                   </div>
                 </div>
