@@ -13,9 +13,11 @@ services:
       - key: PORT
         value: 8080
       - key: SPRING_DATASOURCE_URL
-        fromDatabase:
-          name: abhisaran-db
-          property: connectionString
+        sync: false
+      - key: SPRING_DATASOURCE_USERNAME
+        sync: false
+      - key: SPRING_DATASOURCE_PASSWORD
+        sync: false
       - key: JWT_SECRET
         generateValue: true
       - key: BOOTSTRAP_ADMIN_ID
@@ -60,11 +62,3 @@ services:
           name: abhisaran-api
           property: host
 
-databases:
-  # Managed PostgreSQL 16
-  - name: abhisaran-db
-    databaseName: abhisaran
-    user: abhisaran_user
-    plan: starter
-    region: oregon
-    postgresMajorVersion: 16
