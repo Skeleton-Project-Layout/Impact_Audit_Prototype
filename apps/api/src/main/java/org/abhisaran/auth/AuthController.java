@@ -9,6 +9,7 @@ import org.abhisaran.auth.dto.LoginRequest;
 import org.abhisaran.auth.dto.LoginResponse;
 import org.abhisaran.users.User;
 import org.abhisaran.users.UserRepository;
+import org.abhisaran.users.UserRole;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -23,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/auth")
