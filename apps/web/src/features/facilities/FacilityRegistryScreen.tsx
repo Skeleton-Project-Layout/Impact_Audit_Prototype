@@ -18,7 +18,11 @@ import {
 } from '../../api/geography';
 import { AbhisaranLoader } from '../../components/AbhisaranLoader';
 
-export const FacilityRegistryScreen: React.FC = () => {
+export interface FacilityRegistryScreenProps {
+  onAuditFacility?: (facilityId: string) => void;
+}
+
+export const FacilityRegistryScreen: React.FC<FacilityRegistryScreenProps> = ({ onAuditFacility }) => {
   const [activeTab, setActiveTab] = useState<'directory' | 'register' | 'upload'>('directory');
 
   // Shared master data
@@ -367,6 +371,7 @@ export const FacilityRegistryScreen: React.FC = () => {
                     <th style={{ padding: '12px 16px', fontWeight: 600 }}>District & Block</th>
                     <th style={{ padding: '12px 16px', fontWeight: 600 }}>External ID</th>
                     <th style={{ padding: '12px 16px', fontWeight: 600 }}>Status</th>
+                    <th style={{ padding: '12px 16px', fontWeight: 600, textAlign: 'right' }}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -402,6 +407,19 @@ export const FacilityRegistryScreen: React.FC = () => {
                         <span className="badge badge-success" style={{ fontSize: '11px' }}>
                           {f.status}
                         </span>
+                      </td>
+                      <td style={{ padding: '12px 16px', textAlign: 'right' }}>
+                        {onAuditFacility && (
+                          <button
+                            type="button"
+                            className="btn btn-secondary"
+                            style={{ minHeight: '30px', padding: '2px 10px', fontSize: '12px' }}
+                            onClick={() => onAuditFacility(f.id)}
+                            title="Open Field Audit Workspace for this facility"
+                          >
+                            📋 Audit
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))}

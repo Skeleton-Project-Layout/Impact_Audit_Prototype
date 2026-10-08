@@ -7,15 +7,17 @@ import { FacilityRegistryScreen } from './features/facilities/FacilityRegistrySc
 import { QuestionBankScreen } from './features/questions/QuestionBankScreen';
 import { RubricTesterScreen } from './features/questions/RubricTesterScreen';
 import { RubricReviewScreen } from './features/questions/RubricReviewScreen';
+import { FieldAuditWorkspace } from './features/audit/FieldAuditWorkspace';
 
 export const App: React.FC = () => {
   const [showSplash, setShowSplash] = useState<boolean>(true);
   const [currentUser, setCurrentUser] = useState<UserSession | null>(null);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [adminView, setAdminView] = useState<
-    'overview' | 'geography' | 'facilities' | 'questions' | 'rubric-tester' | 'rubric-review'
+    'overview' | 'geography' | 'facilities' | 'questions' | 'rubric-tester' | 'rubric-review' | 'audit'
   >('overview');
   const [testerQuestionId, setTesterQuestionId] = useState<string | undefined>(undefined);
+  const [auditLocationId, setAuditLocationId] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     // Check if splash was already viewed in this browser session
@@ -57,6 +59,15 @@ export const App: React.FC = () => {
 
   if (!currentUser) {
     return <LoginScreen onLoginSuccess={(user) => setCurrentUser(user)} />;
+  }
+
+  if (adminView === 'audit') {
+    return (
+      <FieldAuditWorkspace
+        initialLocationId={auditLocationId}
+        onBackToOverview={() => setAdminView('overview')}
+      />
+    );
   }
 
   const isWideView = ['questions', 'rubric-tester', 'rubric-review'].includes(adminView);
@@ -191,6 +202,27 @@ export const App: React.FC = () => {
                 }}
               >
                 🛡️ Rubric Review
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setAuditLocationId(undefined);
+                  setAdminView('audit');
+                }}
+                className="btn"
+                style={{
+                  background: 'transparent',
+                  color: 'var(--muted)',
+                  fontWeight: 500,
+                  fontSize: '13px',
+                  padding: '6px 10px',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer'
+                }}
+              >
+                📋 Field Audit
               </button>
             </nav>
           )}
@@ -379,8 +411,16 @@ export const App: React.FC = () => {
                     <p style={{ fontSize: '14px', color: 'var(--muted)', flex: 1 }}>
                       Conduct multi-page field assessments with offline autosave, per-question evidence attachments, and ACS computation.
                     </p>
-                    <button type="button" className="btn btn-secondary" style={{ width: '100%' }} disabled>
-                      Phase 4: Field Audit (Coming Next)
+                    <button
+                      type="button"
+                      className="btn btn-primary"
+                      style={{ width: '100%' }}
+                      onClick={() => {
+                        setAuditLocationId(undefined);
+                        setAdminView('audit');
+                      }}
+                    >
+                      Open Field Audit Workspace
                     </button>
                   </div>
                 </div>
@@ -388,7 +428,14 @@ export const App: React.FC = () => {
             )}
 
             {adminView === 'geography' && <GeographyManagementScreen />}
-            {adminView === 'facilities' && <FacilityRegistryScreen />}
+            {adminView === 'facilities' && (
+              <FacilityRegistryScreen
+                onAuditFacility={(locId) => {
+                  setAuditLocationId(locId);
+                  setAdminView('audit');
+                }}
+              />
+            )}
             {adminView === 'questions' && (
               <QuestionBankScreen onOpenRubricTester={handleOpenRubricTester} />
             )}
