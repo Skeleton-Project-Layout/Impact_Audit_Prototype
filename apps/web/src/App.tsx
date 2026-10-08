@@ -4,12 +4,18 @@ import { LoginScreen, UserSession } from './features/auth/LoginScreen';
 import { BrandLogo } from './components/BrandLogo';
 import { GeographyManagementScreen } from './features/geography/GeographyManagementScreen';
 import { FacilityRegistryScreen } from './features/facilities/FacilityRegistryScreen';
+import { QuestionBankScreen } from './features/questions/QuestionBankScreen';
+import { RubricTesterScreen } from './features/questions/RubricTesterScreen';
+import { RubricReviewScreen } from './features/questions/RubricReviewScreen';
 
 export const App: React.FC = () => {
   const [showSplash, setShowSplash] = useState<boolean>(true);
   const [currentUser, setCurrentUser] = useState<UserSession | null>(null);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
-  const [adminView, setAdminView] = useState<'overview' | 'geography' | 'facilities'>('overview');
+  const [adminView, setAdminView] = useState<
+    'overview' | 'geography' | 'facilities' | 'questions' | 'rubric-tester' | 'rubric-review'
+  >('overview');
+  const [testerQuestionId, setTesterQuestionId] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     // Check if splash was already viewed in this browser session
@@ -40,6 +46,11 @@ export const App: React.FC = () => {
     }
   };
 
+  const handleOpenRubricTester = (questionId?: string) => {
+    setTesterQuestionId(questionId);
+    setAdminView('rubric-tester');
+  };
+
   if (showSplash) {
     return <SplashSequence onComplete={() => setShowSplash(false)} />;
   }
@@ -47,6 +58,8 @@ export const App: React.FC = () => {
   if (!currentUser) {
     return <LoginScreen onLoginSuccess={(user) => setCurrentUser(user)} />;
   }
+
+  const isWideView = ['questions', 'rubric-tester', 'rubric-review'].includes(adminView);
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -65,13 +78,13 @@ export const App: React.FC = () => {
           zIndex: 40
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
           <div onClick={() => setAdminView('overview')} style={{ cursor: 'pointer' }}>
             <BrandLogo size={34} showWordmark={true} />
           </div>
 
           {currentUser.role === 'ADMIN' && (
-            <nav style={{ display: 'flex', gap: '4px' }}>
+            <nav style={{ display: 'flex', gap: '2px', flexWrap: 'wrap' }}>
               <button
                 type="button"
                 onClick={() => setAdminView('overview')}
@@ -81,7 +94,7 @@ export const App: React.FC = () => {
                   color: adminView === 'overview' ? 'var(--accent)' : 'var(--muted)',
                   fontWeight: adminView === 'overview' ? 600 : 500,
                   fontSize: '13px',
-                  padding: '6px 12px',
+                  padding: '6px 10px',
                   border: 'none',
                   borderRadius: '6px',
                   cursor: 'pointer'
@@ -99,13 +112,13 @@ export const App: React.FC = () => {
                   color: adminView === 'geography' ? 'var(--accent)' : 'var(--muted)',
                   fontWeight: adminView === 'geography' ? 600 : 500,
                   fontSize: '13px',
-                  padding: '6px 12px',
+                  padding: '6px 10px',
                   border: 'none',
                   borderRadius: '6px',
                   cursor: 'pointer'
                 }}
               >
-                Geography Hierarchy
+                Geography
               </button>
 
               <button
@@ -117,13 +130,67 @@ export const App: React.FC = () => {
                   color: adminView === 'facilities' ? 'var(--accent)' : 'var(--muted)',
                   fontWeight: adminView === 'facilities' ? 600 : 500,
                   fontSize: '13px',
-                  padding: '6px 12px',
+                  padding: '6px 10px',
                   border: 'none',
                   borderRadius: '6px',
                   cursor: 'pointer'
                 }}
               >
-                Facility Registry
+                Facilities
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setAdminView('questions')}
+                className="btn"
+                style={{
+                  background: adminView === 'questions' ? 'var(--surface-2)' : 'transparent',
+                  color: adminView === 'questions' ? 'var(--accent)' : 'var(--muted)',
+                  fontWeight: adminView === 'questions' ? 600 : 500,
+                  fontSize: '13px',
+                  padding: '6px 10px',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer'
+                }}
+              >
+                Question Bank
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleOpenRubricTester()}
+                className="btn"
+                style={{
+                  background: adminView === 'rubric-tester' ? 'var(--surface-2)' : 'transparent',
+                  color: adminView === 'rubric-tester' ? 'var(--accent)' : 'var(--muted)',
+                  fontWeight: adminView === 'rubric-tester' ? 600 : 500,
+                  fontSize: '13px',
+                  padding: '6px 10px',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer'
+                }}
+              >
+                ⚡ Rubric Sandbox
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setAdminView('rubric-review')}
+                className="btn"
+                style={{
+                  background: adminView === 'rubric-review' ? 'var(--surface-2)' : 'transparent',
+                  color: adminView === 'rubric-review' ? 'var(--accent)' : 'var(--muted)',
+                  fontWeight: adminView === 'rubric-review' ? 600 : 500,
+                  fontSize: '13px',
+                  padding: '6px 10px',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer'
+                }}
+              >
+                🛡️ Rubric Review
               </button>
             </nav>
           )}
@@ -156,7 +223,16 @@ export const App: React.FC = () => {
       </header>
 
       {/* Role-Specific Workspace Shell */}
-      <main style={{ flex: 1, padding: '32px 20px', maxWidth: '1000px', margin: '0 auto', width: '100%' }}>
+      <main
+        style={{
+          flex: 1,
+          padding: '28px 20px',
+          maxWidth: isWideView ? '1280px' : '1000px',
+          margin: '0 auto',
+          width: '100%',
+          transition: 'max-width 0.2s ease'
+        }}
+      >
         {currentUser.mustChangePassword && (
           <div className="alert-banner alert-danger" style={{ marginBottom: '24px' }}>
             <span>⚠️ <b>Security Notice:</b> You are using a temporary bootstrap password. Please update your password immediately in Settings.</span>
@@ -191,7 +267,7 @@ export const App: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => setAdminView('geography')}
-                      className="btn btn-primary"
+                      className="btn btn-secondary"
                       style={{ width: '100%' }}
                     >
                       Manage Geography
@@ -224,18 +300,87 @@ export const App: React.FC = () => {
                   <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                       <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: 'var(--accent-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)', fontWeight: 700 }}>
-                        📋
+                        📚
                       </div>
                       <div>
-                        <h2 style={{ fontSize: '18px', fontWeight: 600 }}>Open Audit</h2>
-                        <span style={{ fontSize: '13px', color: 'var(--muted)' }}>Select pilot location & collect field evidence</span>
+                        <h2 style={{ fontSize: '18px', fontWeight: 600 }}>Question Bank & Versioning</h2>
+                        <span style={{ fontSize: '13px', color: 'var(--muted)' }}>72 Seeded Canonical Questions</span>
                       </div>
                     </div>
                     <p style={{ fontSize: '14px', color: 'var(--muted)', flex: 1 }}>
-                      Conduct multi-page field assessments with offline autosave and per-question evidence attachments.
+                      Browse domain questions, inspect JSON schemas, review audit history, or bump questions to version N+1.
                     </p>
-                    <button type="button" className="btn btn-secondary" style={{ width: '100%' }}>
-                      Launch Audit Workspace
+                    <button
+                      type="button"
+                      onClick={() => setAdminView('questions')}
+                      className="btn btn-secondary"
+                      style={{ width: '100%' }}
+                    >
+                      Open Question Bank
+                    </button>
+                  </div>
+
+                  <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: 'var(--accent-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)', fontWeight: 700 }}>
+                        ⚡
+                      </div>
+                      <div>
+                        <h2 style={{ fontSize: '18px', fontWeight: 600 }}>Rubric Sandbox</h2>
+                        <span style={{ fontSize: '13px', color: 'var(--muted)' }}>Deterministic Mathematical Engine</span>
+                      </div>
+                    </div>
+                    <p style={{ fontSize: '14px', color: 'var(--muted)', flex: 1 }}>
+                      Live simulation for all 7 rubric types, alert spectrums (Red to Green), Section 9.5 clamping, and red flag rules.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => handleOpenRubricTester()}
+                      className="btn btn-secondary"
+                      style={{ width: '100%' }}
+                    >
+                      Launch Rubric Sandbox
+                    </button>
+                  </div>
+
+                  <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: 'var(--accent-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)', fontWeight: 700 }}>
+                        🛡️
+                      </div>
+                      <div>
+                        <h2 style={{ fontSize: '18px', fontWeight: 600 }}>Rubric Review & Governance</h2>
+                        <span style={{ fontSize: '13px', color: 'var(--muted)' }}>Section 8 Owner Review Sign-off</span>
+                      </div>
+                    </div>
+                    <p style={{ fontSize: '14px', color: 'var(--muted)', flex: 1 }}>
+                      Approve pending rubrics in bulk or individually before audit campaigns launch into field deployment.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setAdminView('rubric-review')}
+                      className="btn btn-primary"
+                      style={{ width: '100%' }}
+                    >
+                      Review & Approve Rubrics
+                    </button>
+                  </div>
+
+                  <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: 'var(--accent-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)', fontWeight: 700 }}>
+                        📋
+                      </div>
+                      <div>
+                        <h2 style={{ fontSize: '18px', fontWeight: 600 }}>Field Audit Workspace</h2>
+                        <span style={{ fontSize: '13px', color: 'var(--muted)' }}>Phase 4 Campaign Deployment</span>
+                      </div>
+                    </div>
+                    <p style={{ fontSize: '14px', color: 'var(--muted)', flex: 1 }}>
+                      Conduct multi-page field assessments with offline autosave, per-question evidence attachments, and ACS computation.
+                    </p>
+                    <button type="button" className="btn btn-secondary" style={{ width: '100%' }} disabled>
+                      Phase 4: Field Audit (Coming Next)
                     </button>
                   </div>
                 </div>
@@ -244,6 +389,18 @@ export const App: React.FC = () => {
 
             {adminView === 'geography' && <GeographyManagementScreen />}
             {adminView === 'facilities' && <FacilityRegistryScreen />}
+            {adminView === 'questions' && (
+              <QuestionBankScreen onOpenRubricTester={handleOpenRubricTester} />
+            )}
+            {adminView === 'rubric-tester' && (
+              <RubricTesterScreen
+                initialQuestionId={testerQuestionId}
+                onBackToBank={() => setAdminView('questions')}
+              />
+            )}
+            {adminView === 'rubric-review' && (
+              <RubricReviewScreen onOpenRubricTester={handleOpenRubricTester} />
+            )}
           </div>
         ) : (
           <div>
