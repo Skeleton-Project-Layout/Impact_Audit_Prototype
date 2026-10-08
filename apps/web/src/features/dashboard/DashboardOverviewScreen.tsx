@@ -185,7 +185,7 @@ export const DashboardOverviewScreen: React.FC<DashboardOverviewScreenProps> = (
 
   const fetchLocationTypes = async () => {
     try {
-      const res = await fetch('/api/v1/locations/types');
+      const res = await fetch('/api/v1/facilities/types');
       if (res.ok) {
         const data = await res.json();
         setLocationTypes(data);

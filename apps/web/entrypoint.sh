@@ -1,10 +1,28 @@
 #!/bin/sh
 set -e
 
-# Default to production backend URL on Render
-TARGET_URL="${API_URL:-${VITE_API_URL:-${VITE_API_BASE_URL:-https://abhisaran-api.onrender.com}}}"
-# Strip trailing slashes
-TARGET_URL="$(echo "$TARGET_URL" | sed 's:/*$::')"
+# Prefer explicit API_URL, then VITE_API_URL, then public production default
+TARGET_URL="${API_URL:-${VITE_API_URL:-https://abhisaran-api.onrender.com}}"
+
+# If someone passed an empty string or relative path, fall back to production API
+if [ -z "$TARGET_URL" ] || [ "$TARGET_URL" = "/api/v1" ] || [ "$TARGET_URL" = "/api" ]; then
+  TARGET_URL="https://abhisaran-api.onrender.com"
+fi
+
+# Ensure scheme exists (default to https:// unless localhost/docker service name)
+case "$TARGET_URL" in
+  http://*|https://*)
+    ;;
+  localhost*|127.0.0.1*|abhisaran-api:*)
+    TARGET_URL="http://${TARGET_URL}"
+    ;;
+  *)
+    TARGET_URL="https://${TARGET_URL}"
+    ;;
+esac
+
+# Strip any trailing /api/v1, /api, or trailing slashes so TARGET_URL is strictly the origin
+TARGET_URL="$(echo "$TARGET_URL" | sed -e 's|/api/v1/*$||' -e 's|/api/*$||' -e 's:/*$::')"
 
 # Extract hostname without protocol and port
 TARGET_HOST="$(echo "$TARGET_URL" | sed -e 's|^[^/]*//||' -e 's|/.*$||' -e 's|:.*$||')"

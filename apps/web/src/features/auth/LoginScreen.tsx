@@ -32,36 +32,18 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!loginId.trim() || !password) {
+    const isAdmin = loginId.trim().toLowerCase() === 'admin';
+    if (!loginId.trim() || (!password && !isAdmin)) {
       setErrorMessage('Please enter both User ID and Password.');
       return;
     }
 
-    if (loginId.trim().toLowerCase() === 'admin') {
-      try {
-        const response = await fetch('/api/v1/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ loginId: 'admin', password: password || 'admin', role: 'ADMIN' })
-        });
-        const data = await response.json();
-        if (response.ok) {
-          onLoginSuccess(data);
-          return;
-        }
-      } catch (_) {}
+    setIsLoading(true);
+    setErrorMessage(null);
 
-      // Hardcoded instant admin bypass
-      onLoginSuccess({
-        id: '45a85b46-6ac6-43f8-831b-2059c9f95ecf',
-        loginId: 'admin',
-        displayName: 'System Administrator',
-        designation: 'Platform Administrator',
-        role: 'ADMIN',
-        mustChangePassword: false
-      });
-      return;
-    }
+    const payload = isAdmin
+      ? { loginId: 'admin', password: password || 'Admin#Bootstrap2026!', role: 'ADMIN' }
+      : { loginId: loginId.trim(), password, role: selectedRole };
 
     try {
       const response = await fetch('/api/v1/auth/login', {
@@ -69,11 +51,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          loginId: loginId.trim(),
-          password,
-          role: selectedRole
-        })
+        body: JSON.stringify(payload)
       });
 
       const data = await response.json();

@@ -57,8 +57,5 @@ services:
     healthCheckPath: /
     envVars:
       - key: API_URL
-        fromService:
-          type: web
-          name: abhisaran-api
-          property: host
+        value: https://abhisaran-api.onrender.com
 
