@@ -1,0 +1,70 @@
+# Render Infrastructure-as-Code (Blueprint) for Abhisaran Platform
+services:
+  # 1. Spring Boot Core Application & Scoring API
+  - type: web
+    name: abhisaran-api
+    runtime: docker
+    dockerfilePath: ./apps/api/Dockerfile
+    dockerContext: ./apps/api
+    plan: starter
+    region: oregon
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: PORT
+        value: 8080
+      - key: SPRING_DATASOURCE_URL
+        fromDatabase:
+          name: abhisaran-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: BOOTSTRAP_ADMIN_ID
+        value: admin
+      - key: BOOTSTRAP_ADMIN_PASSWORD
+        generateValue: true
+      - key: AI_SERVICE_URL
+        value: http://abhisaran-ai:8000
+      - key: AI_SERVICE_TOKEN
+        generateValue: true
+      - key: FEATURE_AI
+        value: "true"
+
+  # 2. Python FastAPI Isolated AI Kernel (Private Service, Zero DB Access)
+  - type: pserv
+    name: abhisaran-ai
+    runtime: docker
+    dockerfilePath: ./apps/ai/Dockerfile
+    dockerContext: ./apps/ai
+    plan: starter
+    region: oregon
+    envVars:
+      - key: AI_SERVICE_TOKEN
+        fromService:
+          type: web
+          name: abhisaran-api
+          envVarKey: AI_SERVICE_TOKEN
+
+  # 3. React + Nginx Static Single Page Application
+  - type: web
+    name: abhisaran-web
+    runtime: docker
+    dockerfilePath: ./apps/web/Dockerfile
+    dockerContext: ./apps/web
+    plan: starter
+    region: oregon
+    healthCheckPath: /
+    envVars:
+      - key: API_URL
+        fromService:
+          type: web
+          name: abhisaran-api
+          property: host
+
+databases:
+  # Managed PostgreSQL 16
+  - name: abhisaran-db
+    databaseName: abhisaran
+    user: abhisaran_user
+    plan: starter
+    region: oregon
+    postgresMajorVersion: 16

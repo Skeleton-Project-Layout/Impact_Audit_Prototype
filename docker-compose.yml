@@ -40,7 +40,7 @@ services:
       BOOTSTRAP_ADMIN_PASSWORD: Admin#Bootstrap2026!
       AI_SERVICE_URL: http://ai:8000
       AI_SERVICE_TOKEN: internal_secret_token_between_spring_and_fastapi_32bytes
-      FEATURE_AI: "false"
+      FEATURE_AI: "true"
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1"]
       interval: 10s

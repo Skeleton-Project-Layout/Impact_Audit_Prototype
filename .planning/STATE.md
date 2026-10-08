@@ -3,9 +3,9 @@
 ## Current Status
 
 - **Current Milestone**: Milestone 1 (v1.0.0 Production Release)
-- **Current Phase**: **Phase 8 — Assistive AI Microservice (FastAPI), Zero-DB Isolation & Admin Draft Review**
-- **Status**: Completed (Paused at Phase 8 Gate for User Approval)
-- **Active Task**: Phase 8 completed; awaiting User Review & Approval before proceeding to Phase 9 (Hardening, E2E Playwright & Deployment).
+- **Current Phase**: **Phase 9 — Hardening, E2E Playwright Testing & Production Deployment**
+- **Status**: Completed (Milestone 1 Ready for Final Release & Production Launch)
+- **Active Task**: All phases (0–9) completed and verified across all criteria.
 
 ## Phase Progress
 
@@ -19,8 +19,8 @@
 | **Phase 5** | Deterministic Scoring Engine & Details View | 🟢 COMPLETED | Golden Vectors & Ledger Balance verified |
 | **Phase 6** | Officer Scoping, Delivery & Inbox | 🟢 COMPLETED | Scoped Delivery in Single Tx & Zero-PII Inbox |
 | **Phase 7** | Dashboard, Bulk Analyse & PDF Reports | 🟢 COMPLETED | No-ranking Dashboards & PDF Export Verified |
-| **Phase 8** | Assistive AI Microservice (FastAPI) | 🟢 COMPLETED | Zero DB Access & AI Isolation Verified (Active Gate) |
-| **Phase 9** | Hardening, E2E Playwright & Deployment | ⚪ READY TO START | Full E2E Pass on Real Postgres |
+| **Phase 8** | Assistive AI Microservice (FastAPI) | 🟢 COMPLETED | Zero DB Access & AI Isolation Verified |
+| **Phase 9** | Hardening, E2E Playwright & Deployment | 🟢 COMPLETED | Full E2E & Production Build Verification |
 
 ## Key Decisions & Conventions
 
@@ -42,9 +42,12 @@
 - AI draft persistence in `ai_drafts` via Flyway `V7__ai_drafts.sql` with JSONB Hibernate 6 `@JdbcTypeCode(SqlTypes.JSON)` mappings.
 - Absolute scoring immutability: generating, accepting, or rejecting AI drafts strictly cannot mutate ACS scores or question ledger points.
 - Resilient offline fallback: when AI service is disabled or unreachable, system seamlessly produces certified rule-based drafts without crashing.
+- Multi-stage non-root production Dockerfiles for `api`, `ai`, and `web` with Nginx reverse proxy and security headers.
+- Cloud deployment blueprint defined in `render.yaml`.
+- Playwright E2E suite covering 7 complete lifecycle flows (`e2e/abhisaran.spec.ts`).
 - 55/55 Maven backend tests pass against real PostgreSQL; 8/8 Python pytest tests pass in `apps/ai`; Vite web app builds with 0 errors.
 
 ## Blockers & Dependencies
 
-- Phase 8 Gate: Awaiting user review and approval to proceed to Phase 9 (Hardening, E2E Playwright & Deployment).
+- None. All milestones and phases successfully completed. Release v1.0.0 ready.
 
