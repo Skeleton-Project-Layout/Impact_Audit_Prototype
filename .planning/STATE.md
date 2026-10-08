@@ -3,9 +3,9 @@
 ## Current Status
 
 - **Current Milestone**: Milestone 1 (v1.0.0 Production Release)
-- **Current Phase**: **Phase 5 — Deterministic Scoring Engine & Details View**
-- **Status**: Completed (Paused at Phase 5 Gate for User Approval)
-- **Active Task**: Phase 5 completed; awaiting User Review & Approval before proceeding to Phase 6 (Officer Scoping, Delivery & Inbox).
+- **Current Phase**: **Phase 6 — Officer Scoping, Automatic Delivery & Jurisdiction ACS Inbox**
+- **Status**: Completed (Paused at Phase 6 Gate for User Approval)
+- **Active Task**: Phase 6 completed; awaiting User Review & Approval before proceeding to Phase 7 (Dashboard, Bulk Analyse & PDF Reports).
 
 ## Phase Progress
 
@@ -16,9 +16,9 @@
 | **Phase 2** | Geography & Pilot Location Management | 🟢 COMPLETED | 4 pilot districts queryable, 100 concurrent code generator test passed, CSV bulk upload tested |
 | **Phase 3** | Question Bank, Versioning & Rubric Tester | 🟢 COMPLETED | Exactly 72 questions seeded, version bump $N \to N+1$ preserves immutability, all 7 rubrics tested in sandbox with Section 9.5 clamping |
 | **Phase 4** | Field Audit Workspace & Reference UI Parity | 🟢 COMPLETED | Parity Checklist verified, 390px mobile & 1280px desktop responsive layouts, 35/35 backend tests pass |
-| **Phase 5** | Deterministic Scoring Engine & Details View | 🟢 COMPLETED | Golden Vectors & Ledger Balance (Active Gate) |
-| **Phase 6** | Officer Scoping, Delivery & Inbox | ⚪ READY TO START | Scoped Delivery in Single Tx |
-| **Phase 7** | Dashboard, Bulk Analyse & PDF Reports | ⚪ NOT STARTED | No-ranking Dashboards & PDF Export |
+| **Phase 5** | Deterministic Scoring Engine & Details View | 🟢 COMPLETED | Golden Vectors & Ledger Balance verified |
+| **Phase 6** | Officer Scoping, Delivery & Inbox | 🟢 COMPLETED | Scoped Delivery in Single Tx & Zero-PII Inbox (Active Gate) |
+| **Phase 7** | Dashboard, Bulk Analyse & PDF Reports | ⚪ READY TO START | No-ranking Dashboards & PDF Export |
 | **Phase 8** | Assistive AI Microservice (FastAPI) | ⚪ NOT STARTED | Zero DB Access & AI Isolation Test |
 | **Phase 9** | Hardening, E2E Playwright & Deployment | ⚪ NOT STARTED | Full E2E Pass on Real Postgres |
 
@@ -31,10 +31,11 @@
 - Magic-byte evidence verification (JPEG, PNG, WebP, PDF), EXIF/GPS stripping, and mandatory anti-PII attestation checkbox.
 - Multi-page pooled pure scoring engine evaluates $\text{ACS} = \left(\frac{\sum \text{earned\_w}}{\sum \text{max\_w}}\right) \times 100$.
 - Deduction Ledger enforces strict mathematical balancing $\sum \text{loss\_contribution} \equiv 100.00 - \text{ACS}$ ($< 0.001$).
-- 5 shared golden vectors verify canonical 4-page audit, perfect score, critical clamps, provisional badge (<70% coverage), and zero-denominator handling.
-- Immutable analysis runs, items, and ledger persisted in PostgreSQL schema `public` via Flyway migration V5.
-- 43/43 Maven backend tests pass against real PostgreSQL; Vite web app builds with 0 errors.
+- Single-transaction atomic delivery: when `analyseLocation` completes, deliveries are recorded in the exact same database transaction for all active district officers (`DEC-007`).
+- Historical delivery back-fill: assigning district scopes to an officer automatically creates delivery records for past completed runs.
+- Strict security & jurisdictional bounds: officers can only access their assigned districts; zero PII leakage (only non-identifying district codes, e.g. `JH-RCH-SCH-0001`).
+- 48/48 Maven backend tests pass against real PostgreSQL; Vite web app builds with 0 errors.
 
 ## Blockers & Dependencies
 
-- Phase 5 Gate: Awaiting user review and approval to proceed to Phase 6 (Officer Scoping, Delivery & Inbox).
+- Phase 6 Gate: Awaiting user review and approval to proceed to Phase 7 (Dashboard, Bulk Analyse & PDF Reports).

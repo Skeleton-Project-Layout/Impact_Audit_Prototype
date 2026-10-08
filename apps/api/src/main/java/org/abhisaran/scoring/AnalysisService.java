@@ -11,6 +11,10 @@ import org.abhisaran.audit.AuditSubmissionRepository;
 import org.abhisaran.auditlog.AuditLogService;
 import org.abhisaran.facilities.PilotLocation;
 import org.abhisaran.facilities.PilotLocationRepository;
+import org.abhisaran.delivery.persistence.Delivery;
+import org.abhisaran.delivery.persistence.DeliveryRepository;
+import org.abhisaran.officers.persistence.OfficerDistrict;
+import org.abhisaran.officers.persistence.OfficerDistrictRepository;
 import org.abhisaran.scoring.dto.AnalysisItemDTO;
 import org.abhisaran.scoring.dto.AnalysisRunDTO;
 import org.abhisaran.scoring.dto.DeductionLedgerDTO;
@@ -44,6 +48,8 @@ public class AnalysisService {
     private final UserRepository userRepository;
     private final AuditLogService auditLogService;
     private final ObjectMapper objectMapper;
+    private final OfficerDistrictRepository officerDistrictRepository;
+    private final DeliveryRepository deliveryRepository;
 
     public AnalysisService(
             PilotLocationRepository locationRepository,
@@ -55,7 +61,9 @@ public class AnalysisService {
             AnalysisLedgerRepository ledgerRepository,
             UserRepository userRepository,
             AuditLogService auditLogService,
-            ObjectMapper objectMapper
+            ObjectMapper objectMapper,
+            OfficerDistrictRepository officerDistrictRepository,
+            DeliveryRepository deliveryRepository
     ) {
         this.locationRepository = locationRepository;
         this.pageRepository = pageRepository;
@@ -67,6 +75,8 @@ public class AnalysisService {
         this.userRepository = userRepository;
         this.auditLogService = auditLogService;
         this.objectMapper = objectMapper;
+        this.officerDistrictRepository = officerDistrictRepository;
+        this.deliveryRepository = deliveryRepository;
     }
 
     @Transactional
@@ -197,6 +207,26 @@ public class AnalysisService {
         String prevStatus = location.getStatus();
         location.setStatus("ANALYSED");
         locationRepository.save(location);
+
+        // Atomic Delivery to in-scope District Officers (DEC-007)
+        if (location.getDistrict() != null) {
+            List<OfficerDistrict> assignments = officerDistrictRepository.findByDistrictId(location.getDistrict().getId());
+            for (OfficerDistrict assignment : assignments) {
+                User officer = assignment.getOfficer();
+                if (officer != null && officer.isActive()) {
+                    if (!deliveryRepository.existsByOfficerIdAndAnalysisRunId(officer.getId(), savedRun.getId())) {
+                        Delivery delivery = new Delivery(
+                                UUID.randomUUID(),
+                                officer,
+                                savedRun,
+                                location,
+                                location.getDistrict()
+                        );
+                        deliveryRepository.save(delivery);
+                    }
+                }
+            }
+        }
 
         // Audit Log
         auditLogService.log(

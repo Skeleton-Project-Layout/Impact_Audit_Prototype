@@ -72,13 +72,17 @@ export interface AnalysisRunDTO {
 }
 
 interface AnalysisDetailsViewProps {
-  locationId: string;
+  locationId?: string;
+  runId?: string;
+  isOfficerView?: boolean;
   onBack: () => void;
   onGoToAudit?: (locationId: string) => void;
 }
 
 export const AnalysisDetailsView: React.FC<AnalysisDetailsViewProps> = ({
   locationId,
+  runId,
+  isOfficerView = false,
   onBack,
   onGoToAudit
 }) => {
@@ -89,24 +93,36 @@ export const AnalysisDetailsView: React.FC<AnalysisDetailsViewProps> = ({
   const [activeTab, setActiveTab] = useState<'ledger' | 'redflags' | 'sections' | 'items'>('ledger');
 
   useEffect(() => {
-    if (locationId) {
+    if ((isOfficerView && runId) || locationId) {
       loadAnalysis();
     } else {
       setLoading(false);
     }
-  }, [locationId]);
+  }, [locationId, runId, isOfficerView]);
 
   const loadAnalysis = async () => {
-    if (!locationId) return;
     try {
       setLoading(true);
       setError(null);
-      const res = await fetch(`/api/v1/locations/${locationId}/analysis/latest`);
+      let res: Response;
+
+      if (isOfficerView && runId) {
+        res = await fetch(`/api/v1/me/results/${runId}`);
+      } else if (locationId) {
+        res = await fetch(`/api/v1/locations/${locationId}/analysis/latest`);
+      } else {
+        setLoading(false);
+        return;
+      }
 
       if (res.status === 204) {
-        // No analysis run yet; auto-trigger first analysis
-        await handleTriggerAnalysis();
-        return;
+        if (!isOfficerView && locationId) {
+          // No analysis run yet; auto-trigger first analysis
+          await handleTriggerAnalysis();
+          return;
+        } else {
+          throw new Error('No analysis data exists for this run.');
+        }
       }
 
       if (!res.ok) {
@@ -123,6 +139,7 @@ export const AnalysisDetailsView: React.FC<AnalysisDetailsViewProps> = ({
   };
 
   const handleTriggerAnalysis = async () => {
+    if (!locationId || isOfficerView) return;
     try {
       setReanalysing(true);
       setError(null);
@@ -258,7 +275,7 @@ export const AnalysisDetailsView: React.FC<AnalysisDetailsViewProps> = ({
         </div>
 
         <div className="analysis-header-actions">
-          {onGoToAudit && (
+          {!isOfficerView && onGoToAudit && locationId && (
             <button
               type="button"
               className="btn btn-secondary"
@@ -268,15 +285,35 @@ export const AnalysisDetailsView: React.FC<AnalysisDetailsViewProps> = ({
               📋 Field Audit Workspace
             </button>
           )}
-          <button
-            type="button"
-            className="btn btn-primary"
-            onClick={handleTriggerAnalysis}
-            disabled={reanalysing}
-            style={{ fontSize: '13px', padding: '7px 14px' }}
-          >
-            {reanalysing ? 'Evaluating...' : '⚡ Re-run Analysis'}
-          </button>
+          {!isOfficerView && locationId && (
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={handleTriggerAnalysis}
+              disabled={reanalysing}
+              style={{ fontSize: '13px', padding: '7px 14px' }}
+            >
+              {reanalysing ? 'Evaluating...' : '⚡ Re-run Analysis'}
+            </button>
+          )}
+          {isOfficerView && (
+            <span
+              style={{
+                fontSize: '12px',
+                padding: '6px 12px',
+                borderRadius: '9999px',
+                background: 'var(--surface-2)',
+                border: '1px solid var(--line)',
+                color: 'var(--muted)',
+                fontWeight: 600,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}
+            >
+              🏛️ Official Scoped Breakdown (Zero PII)
+            </span>
+          )}
         </div>
       </div>
 

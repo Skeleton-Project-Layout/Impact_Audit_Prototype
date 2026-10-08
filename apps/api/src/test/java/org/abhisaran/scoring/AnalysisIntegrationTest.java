@@ -113,7 +113,7 @@ class AnalysisIntegrationTest {
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("Pilot location type missing"));
 
-        String uniqueCode = "JH-TST-SCH-" + String.format("%04d", (int) (Math.random() * 9000) + 1000);
+        String uniqueCode = "JH-TST-" + UUID.randomUUID().toString().replace("-", "").substring(0, 8).toUpperCase();
         testLocation = locationRepository.save(new PilotLocation(
                 UUID.randomUUID(),
                 uniqueCode,

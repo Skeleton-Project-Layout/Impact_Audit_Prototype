@@ -22,4 +22,10 @@ public interface AnalysisRunRepository extends JpaRepository<AnalysisRun, UUID> 
 
     @Query("SELECT COUNT(r) FROM AnalysisRun r WHERE r.pilotLocation.id = :locationId")
     int countRunsByLocationId(@Param("locationId") UUID locationId);
+
+    @Query("SELECT r FROM AnalysisRun r WHERE r.pilotLocation.district.id IN :districtIds AND r.status = 'COMPLETED' ORDER BY r.analyzedAt DESC")
+    List<AnalysisRun> findCompletedRunsByDistrictIds(@Param("districtIds") List<Integer> districtIds);
+
+    @Query("SELECT r FROM AnalysisRun r WHERE r.pilotLocation.district.id = :districtId AND r.status = 'COMPLETED' ORDER BY r.analyzedAt DESC")
+    List<AnalysisRun> findCompletedRunsByDistrictId(@Param("districtId") Integer districtId);
 }

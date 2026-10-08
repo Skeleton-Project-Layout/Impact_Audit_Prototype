@@ -9,17 +9,22 @@ import { RubricTesterScreen } from './features/questions/RubricTesterScreen';
 import { RubricReviewScreen } from './features/questions/RubricReviewScreen';
 import { FieldAuditWorkspace } from './features/audit/FieldAuditWorkspace';
 import { AnalysisDetailsView } from './features/scoring/AnalysisDetailsView';
+import { OfficerInboxScreen } from './features/officers/OfficerInboxScreen';
+import { OfficerManagementScreen } from './features/officers/OfficerManagementScreen';
 
 export const App: React.FC = () => {
   const [showSplash, setShowSplash] = useState<boolean>(true);
   const [currentUser, setCurrentUser] = useState<UserSession | null>(null);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [adminView, setAdminView] = useState<
-    'overview' | 'geography' | 'facilities' | 'questions' | 'rubric-tester' | 'rubric-review' | 'audit' | 'analysis'
+    'overview' | 'geography' | 'facilities' | 'questions' | 'rubric-tester' | 'rubric-review' | 'audit' | 'analysis' | 'officers'
   >('overview');
   const [testerQuestionId, setTesterQuestionId] = useState<string | undefined>(undefined);
   const [auditLocationId, setAuditLocationId] = useState<string | undefined>(undefined);
   const [analysisLocationId, setAnalysisLocationId] = useState<string | undefined>(undefined);
+  const [officerView, setOfficerView] = useState<'inbox' | 'analysis'>('inbox');
+  const [officerRunId, setOfficerRunId] = useState<string | undefined>(undefined);
+  const [officerLocationCode, setOfficerLocationCode] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     // Check if splash was already viewed in this browser session
@@ -76,7 +81,7 @@ export const App: React.FC = () => {
     );
   }
 
-  const isWideView = ['questions', 'rubric-tester', 'rubric-review', 'analysis'].includes(adminView);
+  const isWideView = ['questions', 'rubric-tester', 'rubric-review', 'analysis', 'officers'].includes(adminView) || (currentUser?.role === 'OFFICER');
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -248,6 +253,64 @@ export const App: React.FC = () => {
               >
                 📊 Analysis
               </button>
+
+              <button
+                type="button"
+                onClick={() => setAdminView('officers')}
+                className="btn"
+                style={{
+                  background: adminView === 'officers' ? 'var(--surface-2)' : 'transparent',
+                  color: adminView === 'officers' ? 'var(--accent)' : 'var(--muted)',
+                  fontWeight: adminView === 'officers' ? 600 : 500,
+                  fontSize: '13px',
+                  padding: '6px 10px',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer'
+                }}
+              >
+                🏛️ Officers
+              </button>
+            </nav>
+          )}
+
+          {currentUser.role === 'OFFICER' && (
+            <nav style={{ display: 'flex', gap: '4px' }}>
+              <button
+                type="button"
+                onClick={() => setOfficerView('inbox')}
+                className="btn"
+                style={{
+                  background: officerView === 'inbox' ? 'var(--surface-2)' : 'transparent',
+                  color: officerView === 'inbox' ? 'var(--accent)' : 'var(--muted)',
+                  fontWeight: officerView === 'inbox' ? 600 : 500,
+                  fontSize: '13px',
+                  padding: '6px 12px',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer'
+                }}
+              >
+                📥 ACS Inbox
+              </button>
+              {officerView === 'analysis' && (
+                <button
+                  type="button"
+                  className="btn"
+                  style={{
+                    background: 'var(--surface-2)',
+                    color: 'var(--accent)',
+                    fontWeight: 600,
+                    fontSize: '13px',
+                    padding: '6px 12px',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'default'
+                  }}
+                >
+                  📊 Scoped Report ({officerLocationCode || 'Breakdown'})
+                </button>
+              )}
             </nav>
           )}
         </div>
@@ -470,6 +533,29 @@ export const App: React.FC = () => {
                       Open Continuity Analysis
                     </button>
                   </div>
+
+                  <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: 'var(--accent-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)', fontWeight: 700 }}>
+                        🏛️
+                      </div>
+                      <div>
+                        <h2 style={{ fontSize: '18px', fontWeight: 600 }}>Officer Scoping & Delivery</h2>
+                        <span style={{ fontSize: '13px', color: 'var(--muted)' }}>Multi-District RBAC & Auto-Delivery</span>
+                      </div>
+                    </div>
+                    <p style={{ fontSize: '14px', color: 'var(--muted)', flex: 1 }}>
+                      Register government officers, assign multi-district scopes, manage automated ACS deliveries and back-fill past runs.
+                    </p>
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      style={{ width: '100%' }}
+                      onClick={() => setAdminView('officers')}
+                    >
+                      Manage Officers
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
@@ -509,26 +595,25 @@ export const App: React.FC = () => {
                 }}
               />
             )}
+            {adminView === 'officers' && <OfficerManagementScreen />}
           </div>
         ) : (
           <div>
-            <h1 style={{ fontSize: '24px', fontWeight: 700, marginBottom: '8px', color: 'var(--ink)' }}>
-              Government Officer Portal
-            </h1>
-            <p style={{ color: 'var(--muted)', marginBottom: '32px' }}>
-              Jurisdiction ACS inbox and service continuity reports for assigned districts.
-            </p>
-
-            <div className="card" style={{ textAlign: 'center', padding: '48px 24px' }}>
-              <div style={{ fontSize: '36px', marginBottom: '16px' }}>📥</div>
-              <h2 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '8px' }}>ACS Inbox</h2>
-              <p style={{ fontSize: '14px', color: 'var(--muted)', maxWidth: '480px', margin: '0 auto 24px' }}>
-                Delivered institutional audit scores for your assigned district jurisdiction will appear here once analysed.
-              </p>
-              <div className="alert-banner" style={{ display: 'inline-flex', background: 'var(--surface-2)', border: '1px solid var(--line)', color: 'var(--muted)' }}>
-                Zero PII Guarantee: All institutions are reported by non-identifying district codes.
-              </div>
-            </div>
+            {officerView === 'analysis' && officerRunId ? (
+              <AnalysisDetailsView
+                runId={officerRunId}
+                isOfficerView={true}
+                onBack={() => setOfficerView('inbox')}
+              />
+            ) : (
+              <OfficerInboxScreen
+                onViewAnalysis={(runId, locationCode) => {
+                  setOfficerRunId(runId);
+                  setOfficerLocationCode(locationCode);
+                  setOfficerView('analysis');
+                }}
+              />
+            )}
           </div>
         )}
       </main>

@@ -24,7 +24,7 @@ public class AnalysisController {
     }
 
     @PostMapping("/locations/{locationId}/analyse")
-    @PreAuthorize("hasAnyRole('STATE_ADMIN', 'DISTRICT_OFFICER', 'FIELD_AUDITOR')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OFFICER', 'STATE_ADMIN', 'DISTRICT_OFFICER', 'FIELD_AUDITOR')")
     public ResponseEntity<AnalysisRunDTO> triggerLocationAnalysis(
             @PathVariable UUID locationId,
             Authentication authentication,
