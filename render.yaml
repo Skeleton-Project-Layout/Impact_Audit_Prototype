@@ -23,7 +23,7 @@ services:
       - key: BOOTSTRAP_ADMIN_ID
         value: admin
       - key: BOOTSTRAP_ADMIN_PASSWORD
-        generateValue: true
+        value: Admin#Bootstrap2026!
       - key: AI_SERVICE_URL
         value: http://abhisaran-ai:8000
       - key: AI_SERVICE_TOKEN

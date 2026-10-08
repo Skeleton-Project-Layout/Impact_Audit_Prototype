@@ -13,6 +13,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @Component
@@ -42,8 +43,12 @@ public class AdminBootstrapRunner implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) {
-        if (userRepository.existsByRole(UserRole.ADMIN)) {
-            log.info("Admin account already exists. Bootstrap is a no-op.");
+        Optional<User> existingAdminOpt = userRepository.findByLoginId(bootstrapAdminId);
+        if (existingAdminOpt.isPresent()) {
+            User admin = existingAdminOpt.get();
+            admin.setPasswordHash(passwordEncoder.encode(bootstrapAdminPassword));
+            userRepository.saveAndFlush(admin);
+            log.info("Synchronized bootstrap admin '{}' password with configured BOOTSTRAP_ADMIN_PASSWORD.", bootstrapAdminId);
             return;
         }
 
