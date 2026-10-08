@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './auditWorkspace.css';
-import { SECTIONS, QUESTIONS } from './questionsData';
+import { SECTIONS, QUESTIONS, mapQuizAnswersToBackendBatch, ZIP_TO_CANONICAL_MAP } from './questionsData';
 import { PilotLocationReportModal } from '../dashboard/PilotLocationReportModal';
 
 export interface AuditWorkspaceProps {
@@ -84,7 +84,12 @@ export const FieldAuditWorkspace: React.FC<AuditWorkspaceProps> = ({
         })));
 
         if (!selectedLocationId && items.length > 0) {
-          setSelectedLocationId(items[0].id);
+          const ekhLoc = items.find((i: any) =>
+            i.code?.includes('EKH') ||
+            i.districtName?.toLowerCase().includes('khasi') ||
+            i.districtName?.toLowerCase().includes('khalasi')
+          );
+          setSelectedLocationId(ekhLoc ? ekhLoc.id : items[0].id);
         }
       }
     } catch (e) {
@@ -249,7 +254,7 @@ export const FieldAuditWorkspace: React.FC<AuditWorkspaceProps> = ({
       if (!pageId) throw new Error('Could not initialize backend audit page');
 
       // 2. Upload evidence multipart
-      const code = `S${String(targetQuestionForFile).padStart(2, '0')}`;
+      const code = ZIP_TO_CANONICAL_MAP[targetQuestionForFile] || 'S11';
       const formData = new FormData();
       formData.append('file', file);
       formData.append('questionId', code);
@@ -312,24 +317,18 @@ export const FieldAuditWorkspace: React.FC<AuditWorkspaceProps> = ({
 
       if (!pageId) throw new Error('Could not create or find an audit page on the server.');
 
-      // 2. Format answers for backend canonical question IDs (S01, S02, etc.)
-      const backendAnswers: Record<string, any> = {};
-      Object.entries(answers).forEach(([qKey, qVal]) => {
-        const qNum = qKey.replace('question', '');
-        const code = `S${String(qNum).padStart(2, '0')}`;
-        backendAnswers[code] = {
-          value: qVal,
-          na: false,
-          notAssessed: false
-        };
-      });
+      // 2. Format answers for backend canonical question IDs using pure mapper
+      const backendBatch = mapQuizAnswersToBackendBatch(answers);
 
       // Save answers batch
-      await fetch(`/api/v1/pages/${pageId}/answers`, {
+      const saveRes = await fetch(`/api/v1/pages/${pageId}/answers`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ answers: backendAnswers })
+        body: JSON.stringify({ answers: backendBatch })
       });
+      if (!saveRes.ok) {
+        console.warn('Answers batch save HTTP:', saveRes.status);
+      }
 
       // 3. Submit location: transitions status from DRAFT -> READY_FOR_ANALYSIS
       await fetch(`/api/v1/locations/${selectedLocationId}/submit`, {
@@ -339,7 +338,7 @@ export const FieldAuditWorkspace: React.FC<AuditWorkspaceProps> = ({
       });
 
       // 4. Run Scoring Engine immediately
-      const scoreRes = await fetch(`/api/v1/scoring/${selectedLocationId}/analyse`, {
+      const scoreRes = await fetch(`/api/v1/locations/${selectedLocationId}/analyse`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       });
@@ -600,8 +599,13 @@ export const FieldAuditWorkspace: React.FC<AuditWorkspaceProps> = ({
             .map(q => {
               const qKey = `question${q.n}`;
               const qAns = answers[qKey] || {};
-              const code = `S${String(q.n).padStart(2, '0')}`;
-              const attachedFiles = evidenceMap[code] || [];
+              const canonicalCode = ZIP_TO_CANONICAL_MAP[q.n] || `S${String(q.n).padStart(2, '0')}`;
+              const attachedFiles = [
+                ...(evidenceMap[canonicalCode] || []),
+                ...(evidenceMap[`S${String(q.n).padStart(2, '0')}`] || []),
+                ...(evidenceMap[`question${q.n}`] || []),
+                ...(evidenceMap[String(q.n)] || [])
+              ].filter((v, i, a) => a.findIndex(t => t.id === v.id) === i);
               const isAnswered = Object.values(qAns).some(v => Array.isArray(v) ? v.length > 0 : String(v).trim() !== '');
 
               return (
@@ -647,24 +651,26 @@ export const FieldAuditWorkspace: React.FC<AuditWorkspaceProps> = ({
                       </div>
                     </div>
 
-                    {/* Question Evidence Attachment Button */}
-                    <button
-                      type="button"
-                      className="btn btn-secondary"
-                      onClick={() => handleTriggerUpload(q.n)}
-                      disabled={uploadingForQ === q.n}
-                      style={{
-                        padding: '4px 10px',
-                        fontSize: '12px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '4px',
-                        borderRadius: '6px'
-                      }}
-                      title="Attach photo or documentary evidence to this question"
-                    >
-                      {uploadingForQ === q.n ? '⏳ Uploading...' : `📎 Attach Evidence (${attachedFiles.length})`}
-                    </button>
+                    {/* Question Evidence Attachment Button - Only where necessary */}
+                    {q.allowEvidence && (
+                      <button
+                        type="button"
+                        className="btn btn-secondary"
+                        onClick={() => handleTriggerUpload(q.n)}
+                        disabled={uploadingForQ === q.n}
+                        style={{
+                          padding: '4px 10px',
+                          fontSize: '12px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          borderRadius: '6px'
+                        }}
+                        title="Attach photo or documentary evidence to this question"
+                      >
+                        {uploadingForQ === q.n ? '⏳ Uploading...' : `📎 Attach Evidence (${attachedFiles.length})`}
+                      </button>
+                    )}
                   </div>
 
                   {/* Render Question Fields based on types */}

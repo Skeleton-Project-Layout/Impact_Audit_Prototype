@@ -1,4 +1,4 @@
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Union
 from pydantic import BaseModel, Field
 
 
@@ -66,3 +66,37 @@ class GroupObservationsRequest(BaseModel):
 
 class GroupObservationsResponse(BaseModel):
     groups: Dict[str, List[str]]
+
+
+class ClassifyReportRequest(BaseModel):
+    facility_code: Optional[str] = "DEFAULT"
+    facility_type: Optional[str] = "PILOT"
+    domain: Optional[str] = "ALL"
+    answers: Optional[Union[Dict[str, Any], List[Dict[str, Any]], Any]] = Field(default_factory=dict)
+    scored_items: Optional[List[Dict[str, Any]]] = None
+    evidence_items: Optional[List[Dict[str, Any]]] = None
+
+
+class AssessmentPointDTO(BaseModel):
+    id: str
+    title: str
+    icon: str
+    alertColor: str
+    alertLabel: str
+    score: float
+    maxScore: float
+    summary: str
+    keyFindings: List[str]
+    evidence: List[Dict[str, Any]]
+    suggestedAction: str
+
+
+class ClassifyReportResponse(BaseModel):
+    facilityCode: str
+    facilityType: str
+    domain: str
+    acsScore: float
+    alertBand: str
+    points: List[AssessmentPointDTO]
+    generatedAt: str
+

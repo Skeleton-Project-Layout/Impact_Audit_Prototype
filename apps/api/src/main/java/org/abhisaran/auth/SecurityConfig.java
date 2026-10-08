@@ -31,6 +31,7 @@ public class SecurityConfig {
                 ).permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/geography/**").permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/facilities/types").permitAll()
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/evidence/**").permitAll()
                 .requestMatchers("/api/v1/**").authenticated()
                 .anyRequest().permitAll()
             )

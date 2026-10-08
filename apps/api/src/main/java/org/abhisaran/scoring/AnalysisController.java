@@ -39,7 +39,7 @@ public class AnalysisController {
         return ResponseEntity.ok(dashboardService.executeBulkAnalyse(request, actorId, clientIp));
     }
 
-    @PostMapping("/locations/{locationId}/analyse")
+    @PostMapping(value = {"/locations/{locationId}/analyse", "/scoring/{locationId}/analyse"})
     @PreAuthorize("hasAnyRole('ADMIN', 'OFFICER', 'STATE_ADMIN', 'DISTRICT_OFFICER', 'FIELD_AUDITOR')")
     public ResponseEntity<AnalysisRunDTO> triggerLocationAnalysis(
             @PathVariable UUID locationId,
@@ -51,6 +51,14 @@ public class AnalysisController {
 
         AnalysisRunDTO result = analysisService.analyseLocation(locationId, actorId, clientIp);
         return ResponseEntity.ok(result);
+    }
+
+    @GetMapping(value = {"/locations/{locationId}/smart-classification", "/scoring/{locationId}/smart-classification"})
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<java.util.Map<String, Object>> getSmartClassification(
+            @PathVariable UUID locationId
+    ) {
+        return ResponseEntity.ok(analysisService.getSmartClassification(locationId));
     }
 
     @GetMapping("/locations/{locationId}/analysis/latest")

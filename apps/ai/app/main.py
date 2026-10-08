@@ -5,12 +5,15 @@ from app.models import (
     PiiScreenRequest, PiiScreenResponse,
     ExtractTextRequest, ExtractTextResponse,
     SummariseRunRequest, SummariseRunResponse,
-    GroupObservationsRequest, GroupObservationsResponse
+    GroupObservationsRequest, GroupObservationsResponse,
+    ClassifyReportRequest, ClassifyReportResponse
 )
 from app.services.pii_scrubber import screen_and_mask_pii
 from app.services.ocr_extractor import extract_text_from_evidence
 from app.services.narrative_summarizer import generate_run_narrative
 from app.services.observation_grouper import group_observations_by_theme
+from app.services.smart_classifier import classify_pilot_audit
+
 
 app = FastAPI(
     title="Abhisaran Assistive AI Service",
@@ -78,3 +81,18 @@ def summarise_run(req: SummariseRunRequest, x_ai_service_token: str = Header(Non
 def group_observations(req: GroupObservationsRequest, x_ai_service_token: str = Header(None, alias="X-AI-Service-Token")):
     verify_token(x_ai_service_token)
     return GroupObservationsResponse(groups=group_observations_by_theme(req.observations))
+
+
+@app.post("/v1/classify-report", response_model=ClassifyReportResponse)
+def classify_report(req: ClassifyReportRequest, x_ai_service_token: str = Header(None, alias="X-AI-Service-Token")):
+    verify_token(x_ai_service_token)
+    res = classify_pilot_audit(
+        facility_code=req.facility_code,
+        facility_type=req.facility_type,
+        domain=req.domain,
+        answers=req.answers,
+        scored_items=req.scored_items,
+        evidence_items=req.evidence_items
+    )
+    return ClassifyReportResponse(**res)
+

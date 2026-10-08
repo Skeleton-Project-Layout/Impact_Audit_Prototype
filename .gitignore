@@ -37,5 +37,7 @@ uploads/
 .venv/
 **/__pycache__/
 *.pyc
-.pytest_cache/
-
+# Scratch & temp files
+scratch_*.ps1
+*.zip
+45_Q

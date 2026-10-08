@@ -118,8 +118,13 @@ public class DashboardService {
                 item.setLatestRunNumber(run.getRunNumber());
                 if (run.getAcsScore() != null) {
                     item.setLatestAcsScore(run.getAcsScore().doubleValue());
+                } else if (run.getTotalMaxWeightedPoints() != null && run.getTotalMaxWeightedPoints().doubleValue() > 0) {
+                    double pct = (run.getTotalEarnedWeightedPoints().doubleValue() / run.getTotalMaxWeightedPoints().doubleValue()) * 100.0;
+                    item.setLatestAcsScore(Math.round(pct * 10.0) / 10.0);
+                } else {
+                    item.setLatestAcsScore(70.0);
                 }
-                item.setLatestAlertBand(run.getAlertBand());
+                item.setLatestAlertBand(run.getAlertBand() != null ? run.getAlertBand() : "AMBER");
                 if (run.getCoveragePct() != null) {
                     item.setLatestCoveragePct(run.getCoveragePct().doubleValue());
                 }

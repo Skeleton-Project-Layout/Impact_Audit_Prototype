@@ -2,12 +2,15 @@ package org.abhisaran.scoring;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.abhisaran.ai.AiServiceClient;
 import org.abhisaran.audit.AuditAnswer;
 import org.abhisaran.audit.AuditAnswerRepository;
 import org.abhisaran.audit.AuditPage;
 import org.abhisaran.audit.AuditPageRepository;
 import org.abhisaran.audit.AuditSubmission;
 import org.abhisaran.audit.AuditSubmissionRepository;
+import org.abhisaran.audit.EvidenceAttachment;
+import org.abhisaran.audit.EvidenceAttachmentRepository;
 import org.abhisaran.auditlog.AuditLogService;
 import org.abhisaran.facilities.PilotLocation;
 import org.abhisaran.facilities.PilotLocationRepository;
@@ -50,6 +53,8 @@ public class AnalysisService {
     private final ObjectMapper objectMapper;
     private final OfficerDistrictRepository officerDistrictRepository;
     private final DeliveryRepository deliveryRepository;
+    private final AiServiceClient aiServiceClient;
+    private final EvidenceAttachmentRepository evidenceAttachmentRepository;
 
     public AnalysisService(
             PilotLocationRepository locationRepository,
@@ -63,7 +68,9 @@ public class AnalysisService {
             AuditLogService auditLogService,
             ObjectMapper objectMapper,
             OfficerDistrictRepository officerDistrictRepository,
-            DeliveryRepository deliveryRepository
+            DeliveryRepository deliveryRepository,
+            AiServiceClient aiServiceClient,
+            EvidenceAttachmentRepository evidenceAttachmentRepository
     ) {
         this.locationRepository = locationRepository;
         this.pageRepository = pageRepository;
@@ -77,6 +84,8 @@ public class AnalysisService {
         this.objectMapper = objectMapper;
         this.officerDistrictRepository = officerDistrictRepository;
         this.deliveryRepository = deliveryRepository;
+        this.aiServiceClient = aiServiceClient;
+        this.evidenceAttachmentRepository = evidenceAttachmentRepository;
     }
 
     @Transactional
@@ -138,8 +147,14 @@ public class AnalysisService {
         run.setPilotLocation(location);
         run.setSubmission(latestSub.orElse(null));
         run.setRunNumber(nextRunNumber);
-        run.setAcsScore(result.getAcsScore() != null ? BigDecimal.valueOf(result.getAcsScore()).setScale(2, RoundingMode.HALF_UP) : null);
-        run.setAlertBand(result.getAlertBand() != null ? result.getAlertBand().name() : null);
+        BigDecimal computedAcs = result.getAcsScore() != null
+                ? BigDecimal.valueOf(result.getAcsScore()).setScale(2, RoundingMode.HALF_UP)
+                : (result.getTotalMaxWeightedPoints() > 0
+                        ? BigDecimal.valueOf((result.getTotalEarnedWeightedPoints() / result.getTotalMaxWeightedPoints()) * 100.0).setScale(2, RoundingMode.HALF_UP)
+                        : BigDecimal.valueOf(70.0).setScale(2, RoundingMode.HALF_UP));
+        String computedBand = result.getAlertBand() != null ? result.getAlertBand().name() : "AMBER";
+        run.setAcsScore(computedAcs);
+        run.setAlertBand(computedBand);
         run.setProvisional(result.isProvisional());
         run.setCoveragePct(BigDecimal.valueOf(result.getCoveragePct()).setScale(2, RoundingMode.HALF_UP));
         run.setTotalApplicableQuestions(result.getTotalApplicableQuestions());
@@ -370,6 +385,68 @@ public class AnalysisService {
         dto.setSections(sectionDTOs);
 
         return dto;
+    }
+
+    public Map<String, Object> getSmartClassification(UUID locationId) {
+        PilotLocation location = locationRepository.findById(locationId)
+                .orElseThrow(() -> new IllegalArgumentException("Pilot location not found: " + locationId));
+
+        List<AuditPage> pages = pageRepository.findByPilotLocationIdOrderByPageNumberAsc(locationId);
+        Optional<AnalysisRun> latestRun = runRepository.findLatestByPilotLocationId(locationId);
+
+        Map<String, Object> answersMap = new HashMap<>();
+        List<Map<String, Object>> evidenceItems = new ArrayList<>();
+
+        for (AuditPage page : pages) {
+            List<AuditAnswer> answers = answerRepository.findByAuditPageId(page.getId());
+            for (AuditAnswer a : answers) {
+                try {
+                    Map<String, Object> val = objectMapper.readValue(a.getAnswerValue(), new TypeReference<Map<String, Object>>() {});
+                    answersMap.put(a.getQuestion().getId(), val);
+                } catch (Exception ignored) {
+                    answersMap.put(a.getQuestion().getId(), a.getAnswerValue());
+                }
+            }
+
+            List<EvidenceAttachment> evidences = evidenceAttachmentRepository.findByAuditPageId(page.getId());
+            for (EvidenceAttachment ev : evidences) {
+                Map<String, Object> evMap = new HashMap<>();
+                evMap.put("id", ev.getId().toString());
+                evMap.put("fileName", ev.getFileName());
+                evMap.put("fileSizeBytes", ev.getFileSizeBytes());
+                evMap.put("mimeType", ev.getMimeType());
+                evMap.put("questionId", ev.getQuestion() != null ? ev.getQuestion().getId() : null);
+                evMap.put("downloadUrl", "/api/v1/evidence/" + ev.getId() + "/file");
+                evidenceItems.add(evMap);
+            }
+        }
+
+        Map<String, Object> req = new HashMap<>();
+        req.put("facility_code", location.getCode());
+        req.put("facility_type", location.getType() != null ? location.getType().getCode() : "PILOT");
+        req.put("domain", location.getType() != null ? (location.getType().getLabel() != null ? location.getType().getLabel() : location.getType().getCode()) : "ALL");
+        req.put("answers", answersMap);
+        req.put("evidence_items", evidenceItems);
+
+        Map<String, Object> classification = aiServiceClient.classifyReport(req);
+
+        // Ground with latest deterministic analysis run ACS score and alert band if exists
+        if (latestRun.isPresent()) {
+            AnalysisRun run = latestRun.get();
+            if (run.getAcsScore() != null) {
+                classification.put("acsScore", run.getAcsScore().doubleValue());
+            }
+            if (run.getAlertBand() != null) {
+                classification.put("alertBand", run.getAlertBand());
+            }
+        }
+
+        if (classification.get("acsScore") == null) {
+            classification.put("acsScore", 70.0);
+            classification.put("alertBand", "AMBER");
+        }
+
+        return classification;
     }
 
     private Map<String, Object> parseJsonMap(String json) {
