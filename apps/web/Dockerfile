@@ -18,10 +18,12 @@ RUN rm -rf ./*
 # Copy compiled assets from builder
 COPY --from=builder /app/dist .
 COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY entrypoint.sh /docker-entrypoint-app.sh
+RUN chmod +x /docker-entrypoint-app.sh
 
 EXPOSE 80
 
 HEALTHCHECK --interval=15s --timeout=3s --retries=3 \
   CMD wget --quiet --tries=1 --spider http://localhost/ || exit 1
 
-CMD ["nginx", "-g", "daemon off;"]
+ENTRYPOINT ["/docker-entrypoint-app.sh"]
