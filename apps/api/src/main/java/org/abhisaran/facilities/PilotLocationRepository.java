@@ -33,4 +33,22 @@ public interface PilotLocationRepository extends JpaRepository<PilotLocation, UU
             @Param("status") String status,
             Pageable pageable
     );
+    long countByStatus(String status);
+
+    @Query("SELECT l FROM PilotLocation l WHERE " +
+           "(:districtId IS NULL OR l.district.id = :districtId) AND " +
+           "(:typeId IS NULL OR l.type.id = :typeId) AND " +
+           "(:blockId IS NULL OR l.block.id = :blockId) AND " +
+           "(:status IS NULL OR l.status = :status) AND " +
+           "LOWER(l.code) LIKE :searchPattern " +
+           "ORDER BY l.code ASC")
+    Page<PilotLocation> searchLocationsWithTerm(
+            @Param("districtId") Integer districtId,
+            @Param("typeId") Integer typeId,
+            @Param("blockId") Integer blockId,
+            @Param("status") String status,
+            @Param("searchPattern") String searchPattern,
+            Pageable pageable
+    );
 }
+

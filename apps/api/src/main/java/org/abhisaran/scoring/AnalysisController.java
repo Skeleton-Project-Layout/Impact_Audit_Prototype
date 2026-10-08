@@ -16,11 +16,27 @@ import java.util.UUID;
 public class AnalysisController {
 
     private final AnalysisService analysisService;
+    private final org.abhisaran.dashboard.DashboardService dashboardService;
     private final UserRepository userRepository;
 
-    public AnalysisController(AnalysisService analysisService, UserRepository userRepository) {
+    public AnalysisController(AnalysisService analysisService,
+                              org.abhisaran.dashboard.DashboardService dashboardService,
+                              UserRepository userRepository) {
         this.analysisService = analysisService;
+        this.dashboardService = dashboardService;
         this.userRepository = userRepository;
+    }
+
+    @PostMapping("/locations/bulk-analyse")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<org.abhisaran.dashboard.dto.BulkAnalyseResponse> bulkAnalyseLocations(
+            @RequestBody(required = false) org.abhisaran.dashboard.dto.BulkAnalyseRequest request,
+            Authentication authentication,
+            HttpServletRequest httpRequest
+    ) {
+        UUID actorId = resolveUserId(authentication);
+        String clientIp = httpRequest.getRemoteAddr();
+        return ResponseEntity.ok(dashboardService.executeBulkAnalyse(request, actorId, clientIp));
     }
 
     @PostMapping("/locations/{locationId}/analyse")

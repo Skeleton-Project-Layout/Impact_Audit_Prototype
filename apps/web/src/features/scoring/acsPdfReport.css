@@ -1,0 +1,364 @@
+/* ACS PDF Report View Styles */
+
+.pdf-report-container {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  background: var(--surface);
+}
+
+.pdf-report-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  gap: 16px;
+}
+
+.pdf-report-paper {
+  background: #ffffff;
+  color: #0f172a;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  padding: 40px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Watermark */
+.pdf-watermark {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-35deg);
+  font-size: 64px;
+  font-weight: 900;
+  color: rgba(15, 23, 42, 0.03);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  pointer-events: none;
+  white-space: nowrap;
+  user-select: none;
+  z-index: 0;
+}
+
+.pdf-header {
+  border-bottom: 2px solid #0f172a;
+  padding-bottom: 20px;
+  position: relative;
+  z-index: 1;
+}
+
+.pdf-header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.pdf-emblem-group {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.pdf-emblem-badge {
+  width: 52px;
+  height: 52px;
+  border-radius: 8px;
+  background: #0f172a;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: 800;
+}
+
+.pdf-titles h2 {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #475569;
+  margin: 0 0 2px 0;
+}
+
+.pdf-titles h1 {
+  font-size: 20px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 4px 0;
+}
+
+.pdf-titles p {
+  font-size: 11px;
+  color: #64748b;
+  margin: 0;
+}
+
+.pdf-code-banner {
+  text-align: right;
+  font-family: var(--font-mono, monospace);
+}
+
+.pdf-code-banner .code {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  color: #0f172a;
+}
+
+.pdf-code-banner .run-tag {
+  font-size: 12px;
+  color: #64748b;
+}
+
+/* Facility Code-Only Details Grid */
+.pdf-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  padding: 16px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 12px;
+  position: relative;
+  z-index: 1;
+}
+
+.pdf-meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pdf-meta-item .label {
+  font-size: 10px;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: #64748b;
+  letter-spacing: 0.05em;
+}
+
+.pdf-meta-item .val {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+/* Score Block */
+.pdf-score-card {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+  z-index: 1;
+}
+
+.pdf-score-primary {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 6px;
+  background: #f8fafc;
+  border-right: 1px solid #cbd5e1;
+}
+
+.pdf-score-number {
+  font-size: 54px;
+  font-weight: 900;
+  line-height: 1;
+  font-family: var(--font-mono, monospace);
+  color: #0f172a;
+}
+
+.pdf-score-band {
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 4px 12px;
+  border-radius: 999px;
+}
+
+.pdf-score-stats {
+  padding: 20px 24px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  align-content: center;
+  font-size: 12px;
+}
+
+.pdf-stat-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pdf-stat-cell .stat-label {
+  font-size: 11px;
+  color: #64748b;
+}
+
+.pdf-stat-cell .stat-val {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+  font-family: var(--font-mono, monospace);
+}
+
+/* Tables in PDF */
+.pdf-section-title {
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #0f172a;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pdf-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+  position: relative;
+  z-index: 1;
+}
+
+.pdf-table th {
+  background: #f1f5f9;
+  color: #334155;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 10px;
+  padding: 8px 10px;
+  border: 1px solid #cbd5e1;
+  text-align: left;
+}
+
+.pdf-table td {
+  padding: 8px 10px;
+  border: 1px solid #e2e8f0;
+  color: #0f172a;
+  vertical-align: top;
+}
+
+.pdf-table tr:nth-child(even) td {
+  background: #f8fafc;
+}
+
+/* Red Flags Callout */
+.pdf-red-flag-box {
+  background: #fef2f2;
+  border: 1px solid #f87171;
+  border-left: 5px solid #dc2626;
+  border-radius: 8px;
+  padding: 16px 20px;
+  position: relative;
+  z-index: 1;
+}
+
+.pdf-red-flag-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #991b1b;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+/* Footer / Disclaimer */
+.pdf-footer {
+  border-top: 1px solid #cbd5e1;
+  padding-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font-size: 10px;
+  color: #64748b;
+  position: relative;
+  z-index: 1;
+}
+
+.pdf-signature-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-top: 12px;
+  padding-top: 16px;
+}
+
+.pdf-sig-box {
+  border-top: 1px solid #94a3b8;
+  width: 200px;
+  text-align: center;
+  padding-top: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #334155;
+}
+
+/* Print Rules */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  header,
+  nav,
+  .pdf-report-toolbar,
+  .btn,
+  .alert-banner {
+    display: none !important;
+  }
+
+  .pdf-report-container {
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: #ffffff !important;
+  }
+
+  .pdf-report-paper {
+    border: none !important;
+    box-shadow: none !important;
+    padding: 10mm 15mm !important;
+  }
+
+  .pdf-watermark {
+    color: rgba(0, 0, 0, 0.04) !important;
+  }
+
+  .pdf-table,
+  .pdf-score-card,
+  .pdf-red-flag-box {
+    page-break-inside: avoid;
+  }
+
+  @page {
+    size: A4 portrait;
+    margin: 12mm 10mm 12mm 10mm;
+  }
+}

@@ -11,13 +11,15 @@ import { FieldAuditWorkspace } from './features/audit/FieldAuditWorkspace';
 import { AnalysisDetailsView } from './features/scoring/AnalysisDetailsView';
 import { OfficerInboxScreen } from './features/officers/OfficerInboxScreen';
 import { OfficerManagementScreen } from './features/officers/OfficerManagementScreen';
+import { DashboardOverviewScreen } from './features/dashboard/DashboardOverviewScreen';
+import { AuditLogScreen } from './features/auditlog/AuditLogScreen';
 
 export const App: React.FC = () => {
   const [showSplash, setShowSplash] = useState<boolean>(true);
   const [currentUser, setCurrentUser] = useState<UserSession | null>(null);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [adminView, setAdminView] = useState<
-    'overview' | 'geography' | 'facilities' | 'questions' | 'rubric-tester' | 'rubric-review' | 'audit' | 'analysis' | 'officers'
+    'overview' | 'dashboard' | 'geography' | 'facilities' | 'questions' | 'rubric-tester' | 'rubric-review' | 'audit' | 'analysis' | 'officers' | 'audit-log'
   >('overview');
   const [testerQuestionId, setTesterQuestionId] = useState<string | undefined>(undefined);
   const [auditLocationId, setAuditLocationId] = useState<string | undefined>(undefined);
@@ -81,7 +83,7 @@ export const App: React.FC = () => {
     );
   }
 
-  const isWideView = ['questions', 'rubric-tester', 'rubric-review', 'analysis', 'officers'].includes(adminView) || (currentUser?.role === 'OFFICER');
+  const isWideView = ['dashboard', 'questions', 'rubric-tester', 'rubric-review', 'analysis', 'officers', 'audit-log'].includes(adminView) || (currentUser?.role === 'OFFICER');
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -123,6 +125,24 @@ export const App: React.FC = () => {
                 }}
               >
                 Overview
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setAdminView('dashboard')}
+                className="btn"
+                style={{
+                  background: adminView === 'dashboard' ? 'var(--surface-2)' : 'transparent',
+                  color: adminView === 'dashboard' ? 'var(--accent)' : 'var(--muted)',
+                  fontWeight: adminView === 'dashboard' ? 600 : 500,
+                  fontSize: '13px',
+                  padding: '6px 10px',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer'
+                }}
+              >
+                📊 Dashboard
               </button>
 
               <button
@@ -270,6 +290,24 @@ export const App: React.FC = () => {
                 }}
               >
                 🏛️ Officers
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setAdminView('audit-log')}
+                className="btn"
+                style={{
+                  background: adminView === 'audit-log' ? 'var(--surface-2)' : 'transparent',
+                  color: adminView === 'audit-log' ? 'var(--accent)' : 'var(--muted)',
+                  fontWeight: adminView === 'audit-log' ? 600 : 500,
+                  fontSize: '13px',
+                  padding: '6px 10px',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer'
+                }}
+              >
+                🛡️ Audit Log
               </button>
             </nav>
           )}
@@ -556,10 +594,68 @@ export const App: React.FC = () => {
                       Manage Officers
                     </button>
                   </div>
+
+                  <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: 'var(--accent-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)', fontWeight: 700 }}>
+                        📊
+                      </div>
+                      <div>
+                        <h2 style={{ fontSize: '18px', fontWeight: 600 }}>Administrative Overview</h2>
+                        <span style={{ fontSize: '13px', color: 'var(--muted)' }}>Non-Ranking Table & Bulk Scoring</span>
+                      </div>
+                    </div>
+                    <p style={{ fontSize: '14px', color: 'var(--muted)', flex: 1 }}>
+                      Executive facility status counts, non-ranking code-sorted compliance table, and bulk analysis execution with officer delivery.
+                    </p>
+                    <button
+                      type="button"
+                      className="btn btn-primary"
+                      style={{ width: '100%' }}
+                      onClick={() => setAdminView('dashboard')}
+                    >
+                      Open Executive Dashboard
+                    </button>
+                  </div>
+
+                  <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: 'var(--accent-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)', fontWeight: 700 }}>
+                        🛡️
+                      </div>
+                      <div>
+                        <h2 style={{ fontSize: '18px', fontWeight: 600 }}>Security Audit Log</h2>
+                        <span style={{ fontSize: '13px', color: 'var(--muted)' }}>Append-Only Immutable Event Journal</span>
+                      </div>
+                    </div>
+                    <p style={{ fontSize: '14px', color: 'var(--muted)', flex: 1 }}>
+                      Review complete tamper-evident audit records across authentication, rubric changes, scoring executions, and IP addresses.
+                    </p>
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      style={{ width: '100%' }}
+                      onClick={() => setAdminView('audit-log')}
+                    >
+                      View Audit Log
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
 
+            {adminView === 'dashboard' && (
+              <DashboardOverviewScreen
+                onViewAnalysis={(locId, _runId) => {
+                  setAnalysisLocationId(locId);
+                  setAdminView('analysis');
+                }}
+                onGoToAudit={(locId) => {
+                  setAuditLocationId(locId);
+                  setAdminView('audit');
+                }}
+              />
+            )}
             {adminView === 'geography' && <GeographyManagementScreen />}
             {adminView === 'facilities' && (
               <FacilityRegistryScreen
@@ -596,6 +692,7 @@ export const App: React.FC = () => {
               />
             )}
             {adminView === 'officers' && <OfficerManagementScreen />}
+            {adminView === 'audit-log' && <AuditLogScreen />}
           </div>
         ) : (
           <div>

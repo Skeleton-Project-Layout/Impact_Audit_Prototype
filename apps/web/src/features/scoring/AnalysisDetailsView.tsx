@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './analysisDetails.css';
+import { AcsPdfReportView } from './AcsPdfReportView';
 
 export interface AnalysisItemDTO {
   id: string;
@@ -91,6 +92,7 @@ export const AnalysisDetailsView: React.FC<AnalysisDetailsViewProps> = ({
   const [reanalysing, setReanalysing] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'ledger' | 'redflags' | 'sections' | 'items'>('ledger');
+  const [showPdfReport, setShowPdfReport] = useState<boolean>(false);
 
   useEffect(() => {
     if ((isOfficerView && runId) || locationId) {
@@ -244,6 +246,16 @@ export const AnalysisDetailsView: React.FC<AnalysisDetailsViewProps> = ({
     );
   }
 
+  if (showPdfReport && analysis) {
+    return (
+      <AcsPdfReportView
+        runId={analysis.id}
+        locationId={locationId}
+        onBack={() => setShowPdfReport(false)}
+      />
+    );
+  }
+
   if (!analysis) return null;
 
   const scoreVal = analysis.acsScore !== null ? analysis.acsScore : 0;
@@ -275,6 +287,14 @@ export const AnalysisDetailsView: React.FC<AnalysisDetailsViewProps> = ({
         </div>
 
         <div className="analysis-header-actions">
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => setShowPdfReport(true)}
+            style={{ fontSize: '13px', padding: '7px 14px', display: 'flex', alignItems: 'center', gap: '6px' }}
+          >
+            <span>📄</span> Export / Print PDF
+          </button>
           {!isOfficerView && onGoToAudit && locationId && (
             <button
               type="button"

@@ -3,9 +3,9 @@
 ## Current Status
 
 - **Current Milestone**: Milestone 1 (v1.0.0 Production Release)
-- **Current Phase**: **Phase 6 — Officer Scoping, Automatic Delivery & Jurisdiction ACS Inbox**
-- **Status**: Completed (Paused at Phase 6 Gate for User Approval)
-- **Active Task**: Phase 6 completed; awaiting User Review & Approval before proceeding to Phase 7 (Dashboard, Bulk Analyse & PDF Reports).
+- **Current Phase**: **Phase 7 — Administrative Dashboards, Bulk Analyse, Code-Only PDF Reports & Security Audit Log**
+- **Status**: Completed (Paused at Phase 7 Gate for User Approval)
+- **Active Task**: Phase 7 completed; awaiting User Review & Approval before proceeding to Phase 8 (Assistive AI Microservice).
 
 ## Phase Progress
 
@@ -17,9 +17,9 @@
 | **Phase 3** | Question Bank, Versioning & Rubric Tester | 🟢 COMPLETED | Exactly 72 questions seeded, version bump $N \to N+1$ preserves immutability, all 7 rubrics tested in sandbox with Section 9.5 clamping |
 | **Phase 4** | Field Audit Workspace & Reference UI Parity | 🟢 COMPLETED | Parity Checklist verified, 390px mobile & 1280px desktop responsive layouts, 35/35 backend tests pass |
 | **Phase 5** | Deterministic Scoring Engine & Details View | 🟢 COMPLETED | Golden Vectors & Ledger Balance verified |
-| **Phase 6** | Officer Scoping, Delivery & Inbox | 🟢 COMPLETED | Scoped Delivery in Single Tx & Zero-PII Inbox (Active Gate) |
-| **Phase 7** | Dashboard, Bulk Analyse & PDF Reports | ⚪ READY TO START | No-ranking Dashboards & PDF Export |
-| **Phase 8** | Assistive AI Microservice (FastAPI) | ⚪ NOT STARTED | Zero DB Access & AI Isolation Test |
+| **Phase 6** | Officer Scoping, Delivery & Inbox | 🟢 COMPLETED | Scoped Delivery in Single Tx & Zero-PII Inbox |
+| **Phase 7** | Dashboard, Bulk Analyse & PDF Reports | 🟢 COMPLETED | No-ranking Dashboards & PDF Export (Active Gate) |
+| **Phase 8** | Assistive AI Microservice (FastAPI) | ⚪ READY TO START | Zero DB Access & AI Isolation Test |
 | **Phase 9** | Hardening, E2E Playwright & Deployment | ⚪ NOT STARTED | Full E2E Pass on Real Postgres |
 
 ## Key Decisions & Conventions
@@ -34,8 +34,13 @@
 - Single-transaction atomic delivery: when `analyseLocation` completes, deliveries are recorded in the exact same database transaction for all active district officers (`DEC-007`).
 - Historical delivery back-fill: assigning district scopes to an officer automatically creates delivery records for past completed runs.
 - Strict security & jurisdictional bounds: officers can only access their assigned districts; zero PII leakage (only non-identifying district codes, e.g. `JH-RCH-SCH-0001`).
-- 48/48 Maven backend tests pass against real PostgreSQL; Vite web app builds with 0 errors.
+- Non-ranking administrative overview (`DEC-008`): query sorts strictly by `l.code ASC`. Zero league tables, zero top/bottom-N, no rank column.
+- Bulk scoring engine processes multi-facility batches with `<AbhisaranLoader />` progression modal and dispatches atomic officer notifications.
+- Printable PDF report (`AcsPdfReportView.tsx` with `@media print`) enforces strict code-only presentation with watermark and zero institutional/personal PII.
+- Append-only security audit log (`GET /api/v1/audit-log` restricted to `ROLE_ADMIN`) with filtering by actor, action, and object.
+- 52/52 Maven backend tests pass against real PostgreSQL; Vite web app builds with 0 errors.
 
 ## Blockers & Dependencies
 
-- Phase 6 Gate: Awaiting user review and approval to proceed to Phase 7 (Dashboard, Bulk Analyse & PDF Reports).
+- Phase 7 Gate: Awaiting user review and approval to proceed to Phase 8 (Assistive AI Microservice).
+
