@@ -1,0 +1,49 @@
+{
+  "name": "Zero Denominator Unassessed Audit",
+  "description": "Zero scored questions assessed (questions are N/A or unassessed). ACS is null ('Not calculable'), coverage is 0.00%",
+  "location_id": "JH-RCH-SCH-0005",
+  "expected": {
+    "acs_score": null,
+    "alert_band": null,
+    "is_provisional": true,
+    "coverage_pct": 0.00,
+    "total_applicable_questions": 1,
+    "total_assessed_questions": 0,
+    "total_max_weighted_points": 0.00,
+    "total_earned_weighted_points": 0.00,
+    "total_deductions_weighted_points": 0.00,
+    "ledger_sum": 0.00,
+    "deductions_count": 0
+  },
+  "questions": [
+    {
+      "page_id": "page-1",
+      "page_number": 1,
+      "question_id": "Z01",
+      "question_text": "Hostel residential facilities",
+      "section": "A",
+      "severity": "HIGH",
+      "weight_override": 2,
+      "rubric_config": {
+        "type": "GRID_AFU",
+        "rows": [{ "name": "Beds" }]
+      },
+      "is_na": true,
+      "na_reason": "Facility is a day school with no residential hostel"
+    },
+    {
+      "page_id": "page-1",
+      "page_number": 1,
+      "question_id": "Z02",
+      "question_text": "Special education lab equipment",
+      "section": "A",
+      "severity": "CRITICAL",
+      "weight_override": 3,
+      "rubric_config": {
+        "type": "CHECKLIST_YNP"
+      },
+      "is_not_assessed": true,
+      "not_assessed_reason": "Facility was inaccessible due to seasonal flooding"
+    }
+  ]
+}

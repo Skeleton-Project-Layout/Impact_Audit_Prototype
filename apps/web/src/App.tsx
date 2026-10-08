@@ -8,16 +8,18 @@ import { QuestionBankScreen } from './features/questions/QuestionBankScreen';
 import { RubricTesterScreen } from './features/questions/RubricTesterScreen';
 import { RubricReviewScreen } from './features/questions/RubricReviewScreen';
 import { FieldAuditWorkspace } from './features/audit/FieldAuditWorkspace';
+import { AnalysisDetailsView } from './features/scoring/AnalysisDetailsView';
 
 export const App: React.FC = () => {
   const [showSplash, setShowSplash] = useState<boolean>(true);
   const [currentUser, setCurrentUser] = useState<UserSession | null>(null);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [adminView, setAdminView] = useState<
-    'overview' | 'geography' | 'facilities' | 'questions' | 'rubric-tester' | 'rubric-review' | 'audit'
+    'overview' | 'geography' | 'facilities' | 'questions' | 'rubric-tester' | 'rubric-review' | 'audit' | 'analysis'
   >('overview');
   const [testerQuestionId, setTesterQuestionId] = useState<string | undefined>(undefined);
   const [auditLocationId, setAuditLocationId] = useState<string | undefined>(undefined);
+  const [analysisLocationId, setAnalysisLocationId] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     // Check if splash was already viewed in this browser session
@@ -66,11 +68,15 @@ export const App: React.FC = () => {
       <FieldAuditWorkspace
         initialLocationId={auditLocationId}
         onBackToOverview={() => setAdminView('overview')}
+        onViewAnalysis={(locId) => {
+          setAnalysisLocationId(locId);
+          setAdminView('analysis');
+        }}
       />
     );
   }
 
-  const isWideView = ['questions', 'rubric-tester', 'rubric-review'].includes(adminView);
+  const isWideView = ['questions', 'rubric-tester', 'rubric-review', 'analysis'].includes(adminView);
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -223,6 +229,24 @@ export const App: React.FC = () => {
                 }}
               >
                 📋 Field Audit
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setAdminView('analysis')}
+                className="btn"
+                style={{
+                  background: adminView === 'analysis' ? 'var(--surface-2)' : 'transparent',
+                  color: adminView === 'analysis' ? 'var(--accent)' : 'var(--muted)',
+                  fontWeight: adminView === 'analysis' ? 600 : 500,
+                  fontSize: '13px',
+                  padding: '6px 10px',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer'
+                }}
+              >
+                📊 Analysis
               </button>
             </nav>
           )}
@@ -423,6 +447,29 @@ export const App: React.FC = () => {
                       Open Field Audit Workspace
                     </button>
                   </div>
+
+                  <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: 'var(--accent-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)', fontWeight: 700 }}>
+                        📊
+                      </div>
+                      <div>
+                        <h2 style={{ fontSize: '18px', fontWeight: 600 }}>Continuity Analysis & Ledger</h2>
+                        <span style={{ fontSize: '13px', color: 'var(--muted)' }}>Deterministic ACS Scoring Engine</span>
+                      </div>
+                    </div>
+                    <p style={{ fontSize: '14px', color: 'var(--muted)', flex: 1 }}>
+                      Audit Continuity Score (ACS) evaluation, strict deduction waterfall balance assertion, provisional alerts, and rubric trails.
+                    </p>
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      style={{ width: '100%' }}
+                      onClick={() => setAdminView('analysis')}
+                    >
+                      Open Continuity Analysis
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
@@ -433,6 +480,10 @@ export const App: React.FC = () => {
                 onAuditFacility={(locId) => {
                   setAuditLocationId(locId);
                   setAdminView('audit');
+                }}
+                onViewAnalysis={(locId) => {
+                  setAnalysisLocationId(locId);
+                  setAdminView('analysis');
                 }}
               />
             )}
@@ -447,6 +498,16 @@ export const App: React.FC = () => {
             )}
             {adminView === 'rubric-review' && (
               <RubricReviewScreen onOpenRubricTester={handleOpenRubricTester} />
+            )}
+            {adminView === 'analysis' && (
+              <AnalysisDetailsView
+                locationId={analysisLocationId || ''}
+                onBack={() => setAdminView('facilities')}
+                onGoToAudit={(locId) => {
+                  setAuditLocationId(locId);
+                  setAdminView('audit');
+                }}
+              />
             )}
           </div>
         ) : (

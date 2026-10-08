@@ -1,0 +1,101 @@
+{
+  "name": "Provisional Low Coverage Audit",
+  "description": "Coverage is 60.00% (< 70% threshold) due to unassessed questions, resulting in PROVISIONAL badge",
+  "location_id": "JH-RCH-SCH-0004",
+  "expected": {
+    "acs_score": 90.00,
+    "alert_band": "DARK_GREEN",
+    "is_provisional": true,
+    "coverage_pct": 60.00,
+    "total_applicable_questions": 5,
+    "total_assessed_questions": 3,
+    "total_max_weighted_points": 50.00,
+    "total_earned_weighted_points": 45.00,
+    "total_deductions_weighted_points": 5.00,
+    "ledger_sum": 10.00,
+    "deductions_count": 1
+  },
+  "questions": [
+    {
+      "page_id": "page-1",
+      "page_number": 1,
+      "question_id": "P01",
+      "question_text": "Classroom infrastructure maintenance",
+      "section": "A",
+      "severity": "CRITICAL",
+      "weight_override": 3,
+      "rubric_config": {
+        "type": "RATING_1_5",
+        "max_points": 10.0
+      },
+      "answer_value": {
+        "rating": 5
+      }
+    },
+    {
+      "page_id": "page-1",
+      "page_number": 1,
+      "question_id": "P02",
+      "question_text": "Drinking water filter testing record",
+      "section": "A",
+      "severity": "HIGH",
+      "weight_override": 2,
+      "rubric_config": {
+        "type": "PERCENT_THRESHOLD",
+        "max_points": 5.0,
+        "threshold": 75.0,
+        "partial_margin": 10.0
+      },
+      "answer_value": {
+        "percentage": 70.0
+      },
+      "suggested_intervention": "Conduct scheduled water laboratory testing"
+    },
+    {
+      "page_id": "page-2",
+      "page_number": 2,
+      "question_id": "P03",
+      "question_text": "Sports equipment availability",
+      "section": "B",
+      "severity": "MEDIUM",
+      "weight_override": 1,
+      "rubric_config": {
+        "type": "YESNO_WITH_COUNT",
+        "max_points": 10.0
+      },
+      "answer_value": {
+        "available": true,
+        "count": 50
+      }
+    },
+    {
+      "page_id": "page-2",
+      "page_number": 2,
+      "question_id": "P04",
+      "question_text": "Laboratory equipment functional check",
+      "section": "B",
+      "severity": "HIGH",
+      "weight_override": 2,
+      "rubric_config": {
+        "type": "GRID_AFU",
+        "rows": [{ "name": "Microscope" }]
+      },
+      "is_not_assessed": true,
+      "not_assessed_reason": "Science laboratory was locked during audit visit"
+    },
+    {
+      "page_id": "page-2",
+      "page_number": 2,
+      "question_id": "P05",
+      "question_text": "Mid-day meal kitchen hygiene checklist",
+      "section": "B",
+      "severity": "HIGH",
+      "weight_override": 2,
+      "rubric_config": {
+        "type": "CHECKLIST_YNP"
+      },
+      "is_not_assessed": true,
+      "not_assessed_reason": "Kitchen cook was absent on leave"
+    }
+  ]
+}

@@ -1,0 +1,172 @@
+{
+  "name": "Canonical 4-Page Pooled Audit",
+  "description": "Matches Section 7 worked example in docs/SCORING_SPEC.md with 4 audit pages",
+  "location_id": "JH-RCH-SCH-0001",
+  "expected": {
+    "acs_score": 90.00,
+    "alert_band": "DARK_GREEN",
+    "is_provisional": false,
+    "coverage_pct": 100.00,
+    "total_applicable_questions": 8,
+    "total_assessed_questions": 8,
+    "total_max_weighted_points": 100.00,
+    "total_earned_weighted_points": 90.00,
+    "total_deductions_weighted_points": 10.00,
+    "ledger_sum": 10.00,
+    "deductions_count": 4
+  },
+  "questions": [
+    {
+      "page_id": "page-1",
+      "page_number": 1,
+      "question_id": "S11",
+      "question_text": "Drinking water source functional and tested",
+      "section": "A",
+      "severity": "CRITICAL",
+      "weight_override": 3,
+      "rubric_config": {
+        "type": "GRID_AFU",
+        "rows": [
+          { "name": "Drinking water tap" }
+        ]
+      },
+      "answer_value": {
+        "rows": [
+          { "name": "Drinking water tap", "available": true, "functional": false }
+        ]
+      },
+      "red_flag_logic": "Water source not functional",
+      "suggested_intervention": "Repair water purifier/pump immediately"
+    },
+    {
+      "page_id": "page-1",
+      "page_number": 1,
+      "question_id": "S01",
+      "question_text": "Sanctioned vs working teacher ratio",
+      "section": "A",
+      "severity": "HIGH",
+      "weight_override": 2,
+      "rubric_config": {
+        "type": "RATIO",
+        "max_points": 10.0,
+        "numerator_field": "working",
+        "denominator_field": "sanctioned"
+      },
+      "answer_value": {
+        "working": 10,
+        "sanctioned": 10
+      }
+    },
+    {
+      "page_id": "page-2",
+      "page_number": 2,
+      "question_id": "S04",
+      "question_text": "Student average attendance rate",
+      "section": "B",
+      "severity": "HIGH",
+      "weight_override": 2,
+      "rubric_config": {
+        "type": "PERCENT_THRESHOLD",
+        "max_points": 1.0,
+        "threshold": 75.0,
+        "partial_margin": 10.0
+      },
+      "answer_value": {
+        "attendance_pct": 68.0
+      },
+      "red_flag_logic": "Attendance below 75%",
+      "suggested_intervention": "Initiate parent outreach and mid-day meal review"
+    },
+    {
+      "page_id": "page-2",
+      "page_number": 2,
+      "question_id": "S02",
+      "question_text": "Classroom learning environment rating",
+      "section": "B",
+      "severity": "MEDIUM",
+      "weight_override": 1,
+      "rubric_config": {
+        "type": "RATING_1_5",
+        "max_points": 20.0
+      },
+      "answer_value": {
+        "rating": 5
+      }
+    },
+    {
+      "page_id": "page-3",
+      "page_number": 3,
+      "question_id": "S06",
+      "question_text": "FLN benchmark foundational literacy proficiency",
+      "section": "C",
+      "severity": "CRITICAL",
+      "weight_override": 3,
+      "rubric_config": {
+        "type": "PERCENT_THRESHOLD",
+        "max_points": 1.0,
+        "threshold": 75.0,
+        "partial_margin": 10.0
+      },
+      "answer_value": {
+        "fln_proficient_pct": 50.0
+      },
+      "red_flag_logic": "FLN proficiency critically low",
+      "suggested_intervention": "Deploy remedial FLN workbooks and dedicated learning camp"
+    },
+    {
+      "page_id": "page-3",
+      "page_number": 3,
+      "question_id": "S03",
+      "question_text": "Special educator support available",
+      "section": "C",
+      "severity": "HIGH",
+      "weight_override": 2,
+      "rubric_config": {
+        "type": "YESNO_WITH_COUNT",
+        "max_points": 10.0
+      },
+      "answer_value": {
+        "available": true,
+        "count": 12
+      }
+    },
+    {
+      "page_id": "page-4",
+      "page_number": 4,
+      "question_id": "S12",
+      "question_text": "Fire safety and emergency preparedness",
+      "section": "D",
+      "severity": "CRITICAL",
+      "weight_override": 3,
+      "rubric_config": {
+        "type": "CHECKLIST_YNP",
+        "max_points": 1.0
+      },
+      "answer_value": {
+        "items": [
+          { "item": "Fire extinguisher inspected", "status": "NO" }
+        ]
+      },
+      "red_flag_logic": "Fire safety checklist failed",
+      "suggested_intervention": "Schedule immediate fire safety refill and inspection"
+    },
+    {
+      "page_id": "page-4",
+      "page_number": 4,
+      "question_id": "S05",
+      "question_text": "Boundary wall and physical security perimeter",
+      "section": "D",
+      "severity": "MEDIUM",
+      "weight_override": 1,
+      "rubric_config": {
+        "type": "CHECKLIST_YNP",
+        "max_points": 26.0
+      },
+      "answer_value": {
+        "items": [
+          { "item": "Perimeter wall intact", "status": "YES" }
+        ]
+      }
+    }
+  ]
+}

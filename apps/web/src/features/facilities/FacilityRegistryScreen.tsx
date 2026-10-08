@@ -20,9 +20,13 @@ import { AbhisaranLoader } from '../../components/AbhisaranLoader';
 
 export interface FacilityRegistryScreenProps {
   onAuditFacility?: (facilityId: string) => void;
+  onViewAnalysis?: (facilityId: string) => void;
 }
 
-export const FacilityRegistryScreen: React.FC<FacilityRegistryScreenProps> = ({ onAuditFacility }) => {
+export const FacilityRegistryScreen: React.FC<FacilityRegistryScreenProps> = ({
+  onAuditFacility,
+  onViewAnalysis
+}) => {
   const [activeTab, setActiveTab] = useState<'directory' | 'register' | 'upload'>('directory');
 
   // Shared master data
@@ -409,17 +413,30 @@ export const FacilityRegistryScreen: React.FC<FacilityRegistryScreenProps> = ({ 
                         </span>
                       </td>
                       <td style={{ padding: '12px 16px', textAlign: 'right' }}>
-                        {onAuditFacility && (
-                          <button
-                            type="button"
-                            className="btn btn-secondary"
-                            style={{ minHeight: '30px', padding: '2px 10px', fontSize: '12px' }}
-                            onClick={() => onAuditFacility(f.id)}
-                            title="Open Field Audit Workspace for this facility"
-                          >
-                            📋 Audit
-                          </button>
-                        )}
+                        <div style={{ display: 'inline-flex', gap: '6px' }}>
+                          {onAuditFacility && (
+                            <button
+                              type="button"
+                              className="btn btn-secondary"
+                              style={{ minHeight: '30px', padding: '2px 10px', fontSize: '12px' }}
+                              onClick={() => onAuditFacility(f.id)}
+                              title="Open Field Audit Workspace for this facility"
+                            >
+                              📋 Audit
+                            </button>
+                          )}
+                          {onViewAnalysis && (
+                            <button
+                              type="button"
+                              className="btn btn-secondary"
+                              style={{ minHeight: '30px', padding: '2px 10px', fontSize: '12px' }}
+                              onClick={() => onViewAnalysis(f.id)}
+                              title="View ACS Continuity Analysis & Deduction Ledger"
+                            >
+                              📊 Analysis
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}

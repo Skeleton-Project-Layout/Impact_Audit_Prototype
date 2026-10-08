@@ -1,0 +1,103 @@
+{
+  "name": "Severe Critical Gaps Audit",
+  "description": "Critical questions with < 50% earned triggering Section 9.5 clamp to RED, overall ACS in RED alert band (< 40.00)",
+  "location_id": "JH-RCH-AWC-0003",
+  "expected": {
+    "acs_score": 36.00,
+    "alert_band": "RED",
+    "is_provisional": false,
+    "coverage_pct": 100.00,
+    "total_applicable_questions": 4,
+    "total_assessed_questions": 4,
+    "total_max_weighted_points": 100.00,
+    "total_earned_weighted_points": 36.00,
+    "total_deductions_weighted_points": 64.00,
+    "ledger_sum": 64.00,
+    "deductions_count": 3,
+    "critical_clamped_red_count": 2
+  },
+  "questions": [
+    {
+      "page_id": "page-1",
+      "page_number": 1,
+      "question_id": "A01",
+      "question_text": "Severe Acute Malnutrition (SAM) tracking and referral protocol",
+      "section": "A",
+      "severity": "CRITICAL",
+      "weight_override": 3,
+      "rubric_config": {
+        "type": "RATIO",
+        "max_points": 10.0,
+        "numerator_field": "receiving",
+        "denominator_field": "identified"
+      },
+      "answer_value": {
+        "receiving": 2,
+        "identified": 10
+      },
+      "red_flag_logic": "Less than 50% of SAM children referred or receiving care",
+      "suggested_intervention": "Immediate emergency nutrition referral and home visits"
+    },
+    {
+      "page_id": "page-1",
+      "page_number": 1,
+      "question_id": "A02",
+      "question_text": "Functional drinking water and handwashing station",
+      "section": "A",
+      "severity": "CRITICAL",
+      "weight_override": 3,
+      "rubric_config": {
+        "type": "GRID_AFU",
+        "rows": [
+          { "name": "Drinking water tap" },
+          { "name": "Handwashing facility" }
+        ],
+        "max_points": 10.0
+      },
+      "answer_value": {
+        "rows": [
+          { "name": "Drinking water tap", "available": false, "functional": false },
+          { "name": "Handwashing facility", "available": false, "functional": false }
+        ]
+      },
+      "red_flag_logic": "No drinking water or handwashing station available",
+      "suggested_intervention": "Provision interim water tank and hygiene kits"
+    },
+    {
+      "page_id": "page-2",
+      "page_number": 2,
+      "question_id": "A03",
+      "question_text": "Supplementary nutrition distribution attendance threshold",
+      "section": "B",
+      "severity": "HIGH",
+      "weight_override": 2,
+      "rubric_config": {
+        "type": "PERCENT_THRESHOLD",
+        "max_points": 10.0,
+        "threshold": 75.0,
+        "partial_margin": 10.0
+      },
+      "answer_value": {
+        "percentage": 68.0
+      },
+      "red_flag_logic": "SNP distribution below benchmark",
+      "suggested_intervention": "Verify supply chain and organize community mobilization"
+    },
+    {
+      "page_id": "page-2",
+      "page_number": 2,
+      "question_id": "A04",
+      "question_text": "Early childhood care and education learning materials",
+      "section": "B",
+      "severity": "MEDIUM",
+      "weight_override": 1,
+      "rubric_config": {
+        "type": "RATING_1_5",
+        "max_points": 20.0
+      },
+      "answer_value": {
+        "rating": 5
+      }
+    }
+  ]
+}

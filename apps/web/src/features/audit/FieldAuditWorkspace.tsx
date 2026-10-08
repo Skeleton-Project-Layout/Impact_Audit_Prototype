@@ -11,6 +11,7 @@ import {
 export interface AuditWorkspaceProps {
   initialLocationId?: string;
   onBackToOverview?: () => void;
+  onViewAnalysis?: (locationId: string) => void;
 }
 
 interface QuestionDef {
@@ -61,7 +62,8 @@ const DEFAULT_SECTIONS: SectionDef[] = [
 
 export const FieldAuditWorkspace: React.FC<AuditWorkspaceProps> = ({
   initialLocationId,
-  onBackToOverview
+  onBackToOverview,
+  onViewAnalysis
 }) => {
   // Location selection & metadata
   const [facilities, setFacilities] = useState<Array<{ id: string; code: string; typeLabel: string; districtName: string; status: string }>>([]);
@@ -963,14 +965,35 @@ export const FieldAuditWorkspace: React.FC<AuditWorkspaceProps> = ({
           <span>
             🔒 <b>Audit Submitted &amp; Locked:</b> Status is <b>{locationStatus}</b>. Answers cannot be modified.
           </span>
-          <button
-            type="button"
-            className="btn"
-            style={{ padding: '4px 12px', minHeight: '32px', fontSize: '13px' }}
-            onClick={() => setShowReopenModal(true)}
-          >
-            Reopen Audit (Admin)
-          </button>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            {onViewAnalysis && selectedLocationId && (
+              <button
+                type="button"
+                className="btn primary"
+                style={{
+                  padding: '4px 14px',
+                  minHeight: '32px',
+                  fontSize: '13px',
+                  background: 'linear-gradient(135deg, #2563eb, #1d4ed8)',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '6px',
+                  fontWeight: 600
+                }}
+                onClick={() => onViewAnalysis(selectedLocationId)}
+              >
+                📊 View Continuity Analysis
+              </button>
+            )}
+            <button
+              type="button"
+              className="btn"
+              style={{ padding: '4px 12px', minHeight: '32px', fontSize: '13px' }}
+              onClick={() => setShowReopenModal(true)}
+            >
+              Reopen Audit (Admin)
+            </button>
+          </div>
         </div>
       )}
 

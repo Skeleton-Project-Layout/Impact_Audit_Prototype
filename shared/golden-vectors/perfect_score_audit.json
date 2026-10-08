@@ -1,0 +1,95 @@
+{
+  "name": "Perfect Score Audit",
+  "description": "All scored questions answered with 100% compliance across all pages. Zero deductions, ACS = 100.00.",
+  "location_id": "JH-RCH-HOS-0002",
+  "expected": {
+    "acs_score": 100.00,
+    "alert_band": "DARK_GREEN",
+    "is_provisional": false,
+    "coverage_pct": 100.00,
+    "total_applicable_questions": 4,
+    "total_assessed_questions": 4,
+    "total_max_weighted_points": 50.00,
+    "total_earned_weighted_points": 50.00,
+    "total_deductions_weighted_points": 0.00,
+    "ledger_sum": 0.00,
+    "deductions_count": 0
+  },
+  "questions": [
+    {
+      "page_id": "page-1",
+      "page_number": 1,
+      "question_id": "H01",
+      "question_text": "Emergency triage room available and staffed",
+      "section": "A",
+      "severity": "CRITICAL",
+      "weight_override": 3,
+      "rubric_config": {
+        "type": "GRID_AFU",
+        "rows": [
+          { "name": "Oxygen cylinder" },
+          { "name": "Defibrillator" }
+        ]
+      },
+      "answer_value": {
+        "rows": [
+          { "name": "Oxygen cylinder", "available": true, "functional": true },
+          { "name": "Defibrillator", "available": true, "functional": true }
+        ]
+      }
+    },
+    {
+      "page_id": "page-1",
+      "page_number": 1,
+      "question_id": "H02",
+      "question_text": "Doctor on call attendance ratio",
+      "section": "A",
+      "severity": "HIGH",
+      "weight_override": 2,
+      "rubric_config": {
+        "type": "RATIO",
+        "max_points": 10.0,
+        "numerator_field": "working",
+        "denominator_field": "sanctioned"
+      },
+      "answer_value": {
+        "working": 5,
+        "sanctioned": 5
+      }
+    },
+    {
+      "page_id": "page-2",
+      "page_number": 2,
+      "question_id": "H03",
+      "question_text": "Medicine inventory checklist",
+      "section": "B",
+      "severity": "CRITICAL",
+      "weight_override": 3,
+      "rubric_config": {
+        "type": "CHECKLIST_YNP"
+      },
+      "answer_value": {
+        "items": [
+          { "item": "Essential antibiotics in stock", "status": "YES" },
+          { "item": "IV fluids available", "status": "YES" }
+        ]
+      }
+    },
+    {
+      "page_id": "page-2",
+      "page_number": 2,
+      "question_id": "H04",
+      "question_text": "Cleanliness and sterilization observation",
+      "section": "B",
+      "severity": "MEDIUM",
+      "weight_override": 1,
+      "rubric_config": {
+        "type": "RATING_1_5",
+        "max_points": 12.0
+      },
+      "answer_value": {
+        "rating": 5
+      }
+    }
+  ]
+}
