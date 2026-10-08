@@ -402,4 +402,58 @@ class AuditIntegrationTest {
                         .param("attestation", "true"))
                 .andExpect(status().isBadRequest());
     }
+
+    @Test
+    @WithMockUser(username = "audit_admin", roles = {"ADMIN"})
+    @DisplayName("Should allow submitting partial audit when at least one question is answered")
+    void testPartialAuditSubmissionAndCompleteness() throws Exception {
+        AuditPage page1 = pageRepository.save(new AuditPage(UUID.randomUUID(), testLocation, 1, "DRAFT", testAdmin));
+
+        // 1. Initial empty audit cannot be submitted
+        mockMvc.perform(get("/api/v1/locations/" + testLocation.getId() + "/completeness"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.complete", is(false)))
+                .andExpect(jsonPath("$.canSubmit", is(false)))
+                .andExpect(jsonPath("$.totalAnswered", is(0)));
+
+        mockMvc.perform(post("/api/v1/locations/" + testLocation.getId() + "/submit"))
+                .andExpect(status().isBadRequest());
+
+        // 2. Answer exactly one question (e.g. only 1 facility question evaluated)
+        QuestionBank singleQ = questionBankRepository.findAll().stream()
+                .filter(QuestionBank::isScoredDefault)
+                .filter(QuestionBank::isActive)
+                .findFirst()
+                .orElseThrow();
+
+        AnswerSaveDTO singleAnswer = new AnswerSaveDTO(
+                singleQ.getId(),
+                questionVersionRepository.findTopByQuestionIdOrderByVersionNumberDesc(singleQ.getId()).orElseThrow().getId(),
+                Map.of("score", 2.0),
+                false,
+                null,
+                false,
+                null
+        );
+
+        mockMvc.perform(put("/api/v1/pages/" + page1.getId() + "/answers")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new AnswerBatchSaveRequest(List.of(singleAnswer)))))
+                .andExpect(status().isOk());
+
+        // 3. Completeness check should report incomplete but canSubmit = true
+        mockMvc.perform(get("/api/v1/locations/" + testLocation.getId() + "/completeness"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.complete", is(false)))
+                .andExpect(jsonPath("$.canSubmit", is(true)))
+                .andExpect(jsonPath("$.totalAnswered", is(1)));
+
+        // 4. Submitting partial audit must succeed
+        mockMvc.perform(post("/api/v1/locations/" + testLocation.getId() + "/submit"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status", is("READY_FOR_ANALYSIS")));
+
+        AuditPage submittedPage = pageRepository.findById(page1.getId()).orElseThrow();
+        assertEquals("SUBMITTED", submittedPage.getStatus());
+    }
 }

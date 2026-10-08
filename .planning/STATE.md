@@ -3,9 +3,9 @@
 ## Current Status
 
 - **Current Milestone**: Milestone 1 (v1.0.0 Production Release)
-- **Current Phase**: **Phase 9 — Hardening, E2E Playwright Testing & Production Deployment**
-- **Status**: Completed (Milestone 1 Ready for Final Release & Production Launch)
-- **Active Task**: All phases (0–9) completed and verified across all criteria.
+- **Current Phase**: **Phase 10 — Flexible Partial Audit Evaluation & Dynamic Facility Scoping**
+- **Status**: Completed (Milestone 1 v1.0.0 Feature Complete)
+- **Active Task**: All phases (0–10) completed and verified across all criteria.
 
 ## Phase Progress
 
@@ -21,6 +21,7 @@
 | **Phase 7** | Dashboard, Bulk Analyse & PDF Reports | 🟢 COMPLETED | No-ranking Dashboards & PDF Export Verified |
 | **Phase 8** | Assistive AI Microservice (FastAPI) | 🟢 COMPLETED | Zero DB Access & AI Isolation Verified |
 | **Phase 9** | Hardening, E2E Playwright & Deployment | 🟢 COMPLETED | Full E2E & Production Build Verification |
+| **Phase 10** | Flexible Partial Audit & Dynamic Scoping | 🟢 COMPLETED | Soft-warning submission gate, dynamic ACS denominator, on-demand pages |
 
 ## Key Decisions & Conventions
 

@@ -5,6 +5,8 @@ import java.util.Map;
 
 public class CompletenessReportDTO {
     private boolean complete;
+    private boolean canSubmit;
+    private int totalAnswered;
     private int totalMissing;
     private Map<Integer, List<String>> missingQuestionsByPage;
     private String message;
@@ -14,10 +16,33 @@ public class CompletenessReportDTO {
 
     public CompletenessReportDTO(boolean complete, int totalMissing,
                                  Map<Integer, List<String>> missingQuestionsByPage, String message) {
+        this(complete, totalMissing == 0, 0, totalMissing, missingQuestionsByPage, message);
+    }
+
+    public CompletenessReportDTO(boolean complete, boolean canSubmit, int totalAnswered, int totalMissing,
+                                 Map<Integer, List<String>> missingQuestionsByPage, String message) {
         this.complete = complete;
+        this.canSubmit = canSubmit;
+        this.totalAnswered = totalAnswered;
         this.totalMissing = totalMissing;
         this.missingQuestionsByPage = missingQuestionsByPage;
         this.message = message;
+    }
+
+    public boolean isCanSubmit() {
+        return canSubmit;
+    }
+
+    public void setCanSubmit(boolean canSubmit) {
+        this.canSubmit = canSubmit;
+    }
+
+    public int getTotalAnswered() {
+        return totalAnswered;
+    }
+
+    public void setTotalAnswered(int totalAnswered) {
+        this.totalAnswered = totalAnswered;
     }
 
     public boolean isComplete() {

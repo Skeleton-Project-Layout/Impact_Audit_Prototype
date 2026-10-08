@@ -135,3 +135,15 @@ graph TD
   - Security hardening review (OWASP Top 10, ASVS Level 1 compliance).
   - Operational runbook and backup/restore documentation.
 - **Phase Gate**: All Playwright E2E tests pass on PostgreSQL; production builds succeed; complete operational runbook verified.
+
+---
+
+### Phase 10: Flexible Partial Audit Evaluation & Dynamic Facility Scoping
+- **Objective**: Remove rigid full-coverage blocks so field audits can be evaluated even if only a single school, village, or facility is inspected, with dynamic ACS denominator scaling and on-demand section creation.
+- **Deliverables**:
+  - Soft-warning pre-flight completeness check (`GET /api/v1/locations/{locationId}/completeness`) permitting submission with at least 1 answer.
+  - Dynamic ACS Scoring Engine handling: unassessed/omitted sections excluded from $\sum \text{max\_w}$ with strict ledger balance proof $\sum \text{loss} \equiv 100 - \text{ACS}$.
+  - On-demand facility and section pages in `FieldAuditWorkspace.tsx` avoiding mandatory generation of dummy sections.
+  - End-to-end integration and unit tests for partial audit lifecycle.
+- **Phase Gate**: Partial audits with 1 facility/section submit cleanly to `READY_FOR_ANALYSIS`; ACS calculates without division-by-zero or artificial zero penalty; all 55+ tests pass.
+

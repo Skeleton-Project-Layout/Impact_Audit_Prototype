@@ -111,9 +111,13 @@ export const FieldAuditWorkspace: React.FC<AuditWorkspaceProps> = ({
   // Completeness check modal
   const [completenessModal, setCompletenessModal] = useState<{
     complete: boolean;
+    canSubmit?: boolean;
+    totalAnswered?: number;
     totalMissing: number;
-    missingByPage: Record<number, string[]>;
-    summary: string;
+    missingByPage?: Record<number, string[]>;
+    missingQuestionsByPage?: Record<number, string[]>;
+    summary?: string;
+    message?: string;
   } | null>(null);
 
   // Reopen modal
@@ -568,11 +572,31 @@ export const FieldAuditWorkspace: React.FC<AuditWorkspaceProps> = ({
   };
 
   // Pre-Flight Completeness Check & Submit
+  const executeSubmitLocation = async () => {
+    try {
+      const subRes = await fetch(`/api/v1/locations/${selectedLocationId}/submit`, { method: 'POST' });
+      if (!subRes.ok) {
+        const errJson = await subRes.json();
+        throw new Error(errJson.error || errJson.message || 'Submission failed');
+      }
+      setLocationStatus('READY_FOR_ANALYSIS');
+      setPages((prev) => prev.map((p) => ({ ...p, status: 'SUBMITTED' })));
+      setCompletenessModal(null);
+      setConfirmModal(null);
+      showToast(`🎉 Location ${locationCode} submitted successfully for ACS analysis!`);
+    } catch (e: any) {
+      showToast('Submission error: ' + e.message);
+    }
+  };
+
   const handlePreFlightSubmit = async () => {
     try {
       const res = await fetch(`/api/v1/locations/${selectedLocationId}/completeness`);
       if (!res.ok) throw new Error('Failed to check completeness');
       const report = await res.json();
+      if (!report.missingByPage && report.missingQuestionsByPage) {
+        report.missingByPage = report.missingQuestionsByPage;
+      }
 
       if (!report.complete) {
         setCompletenessModal(report);
@@ -583,20 +607,7 @@ export const FieldAuditWorkspace: React.FC<AuditWorkspaceProps> = ({
           body: `All ${pages.length} audit pages are 100% complete. Once submitted, all pages will be locked and transitioned to 'READY_FOR_ANALYSIS' for scoring computation.`,
           actionLabel: `Submit ${locationCode}`,
           isDanger: false,
-          onConfirm: async () => {
-            try {
-              const subRes = await fetch(`/api/v1/locations/${selectedLocationId}/submit`, { method: 'POST' });
-              if (!subRes.ok) {
-                const errJson = await subRes.json();
-                throw new Error(errJson.error || 'Submission failed');
-              }
-              setLocationStatus('READY_FOR_ANALYSIS');
-              setPages((prev) => prev.map((p) => ({ ...p, status: 'SUBMITTED' })));
-              showToast(`🎉 Location ${locationCode} submitted successfully for ACS analysis!`);
-            } catch (e: any) {
-              showToast('Submission error: ' + e.message);
-            }
-          }
+          onConfirm: executeSubmitLocation
         });
       }
     } catch (err: any) {
@@ -1437,44 +1448,70 @@ export const FieldAuditWorkspace: React.FC<AuditWorkspaceProps> = ({
         </div>
       )}
 
-      {/* Completeness Pre-Flight Block Modal */}
+      {/* Completeness Pre-Flight Modal (Soft-Warning Gate) */}
       {completenessModal && (
         <div className="scrim" onClick={() => setCompletenessModal(null)}>
-          <div className="dlg" onClick={(e) => e.stopPropagation()}>
-            <h2 style={{ color: 'var(--danger)' }}>⚠️ Incomplete Scored Questions</h2>
-            <p>
-              Submission blocked: All applicable scored questions across every page must be answered or explicitly marked with an N/A or Could Not Assess reason.
+          <div className="dlg" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '540px' }}>
+            <h2 style={{ color: completenessModal.canSubmit ? 'var(--warning, #d97706)' : 'var(--danger)' }}>
+              {completenessModal.canSubmit ? 'ℹ️ Partial Audit Notice' : '⚠️ Empty Audit Cannot Be Submitted'}
+            </h2>
+            <p style={{ marginTop: '8px', lineHeight: 1.5 }}>
+              {completenessModal.canSubmit ? (
+                <>
+                  You have answered <b>{completenessModal.totalAnswered ?? 'partial'}</b> scored questions.
+                  {' '}<b>{completenessModal.totalMissing}</b> scored question instances remain unanswered across omitted sections.
+                  <br />
+                  <span style={{ fontSize: '13px', color: 'var(--text-muted)', display: 'inline-block', marginTop: '6px' }}>
+                    It is not necessary to fill forms for every village, school, or section.
+                    Unanswered questions will be classified as <b>NOT_ASSESSED</b> and the deterministic ACS score will scale dynamically to evaluated items.
+                  </span>
+                </>
+              ) : (
+                'Submission blocked: No questions have been answered. At least one question must be answered or marked Not Assessed before submitting for ACS evaluation.'
+              )}
             </p>
 
-            <div style={{ maxHeight: '240px', overflowY: 'auto', background: 'var(--surface-2)', padding: '12px', borderRadius: '8px' }}>
-              {Object.entries(completenessModal.missingByPage || {}).map(([pageNo, qIds]) => (
-                <div key={pageNo} style={{ marginBottom: '10px' }}>
-                  <b style={{ color: 'var(--accent)' }}>Page {pageNo}:</b>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '4px' }}>
-                    {qIds.map((qid) => (
-                      <span
-                        key={qid}
-                        style={{
-                          background: 'var(--danger-soft)',
-                          color: 'var(--danger)',
-                          padding: '2px 8px',
-                          borderRadius: '4px',
-                          fontSize: '12px',
-                          fontWeight: 700
-                        }}
-                      >
-                        {qid}
-                      </span>
-                    ))}
+            {completenessModal.totalMissing > 0 && (
+              <div style={{ maxHeight: '200px', overflowY: 'auto', background: 'var(--surface-2)', padding: '12px', borderRadius: '8px', margin: '14px 0' }}>
+                {Object.entries(completenessModal.missingByPage || completenessModal.missingQuestionsByPage || {}).map(([pageNo, qIds]) => (
+                  <div key={pageNo} style={{ marginBottom: '10px' }}>
+                    <b style={{ color: 'var(--accent)' }}>Page {pageNo}:</b>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '4px' }}>
+                      {qIds.map((qid) => (
+                        <span
+                          key={qid}
+                          style={{
+                            background: 'var(--warning-soft, rgba(217, 119, 6, 0.12))',
+                            color: 'var(--warning, #b45309)',
+                            padding: '2px 8px',
+                            borderRadius: '4px',
+                            fontSize: '12px',
+                            fontWeight: 700
+                          }}
+                        >
+                          {qid}
+                        </span>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
 
-            <div className="acts">
-              <button type="button" className="btn primary" onClick={() => setCompletenessModal(null)}>
-                Understood, Return to Form
+            <div className="acts" style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '16px' }}>
+              <button type="button" className="btn outline" onClick={() => setCompletenessModal(null)}>
+                Return to Editing
               </button>
+              {completenessModal.canSubmit && (
+                <button
+                  type="button"
+                  className="btn primary"
+                  style={{ background: 'var(--accent, #0f766e)' }}
+                  onClick={executeSubmitLocation}
+                >
+                  Submit Partial Audit for Evaluation
+                </button>
+              )}
             </div>
           </div>
         </div>

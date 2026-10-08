@@ -317,7 +317,7 @@ public class AuditService {
 
         List<AuditPage> pages = pageRepository.findByPilotLocationIdOrderByPageNumberAsc(locationId);
         if (pages.isEmpty()) {
-            return new CompletenessReportDTO(false, 0, Map.of(), "No audit pages found for location.");
+            return new CompletenessReportDTO(false, false, 0, 0, Map.of(), "No audit pages found for location.");
         }
 
         // Find applicable scored questions
@@ -328,6 +328,7 @@ public class AuditService {
 
         Map<Integer, List<String>> missingByPage = new HashMap<>();
         int totalMissing = 0;
+        int totalAnswered = 0;
 
         for (AuditPage page : pages) {
             List<AuditAnswer> answers = answerRepository.findByAuditPageId(page.getId());
@@ -343,7 +344,12 @@ public class AuditService {
                     // Check if answer value is effectively empty
                     if (ans.getAnswerValue() == null || ans.getAnswerValue().isBlank() || "{}".equals(ans.getAnswerValue().trim())) {
                         missingForPage.add(sq.getId());
+                    } else {
+                        totalAnswered++;
                     }
+                } else {
+                    // Explicitly marked NA or Not Assessed
+                    totalAnswered++;
                 }
             }
 
@@ -354,11 +360,17 @@ public class AuditService {
         }
 
         boolean complete = totalMissing == 0;
-        String message = complete
-                ? "All scored questions are fully answered across all " + pages.size() + " pages."
-                : "Found " + totalMissing + " unanswered scored question instances across pages.";
+        boolean canSubmit = totalAnswered > 0;
+        String message;
+        if (complete) {
+            message = "All scored questions are fully answered across all " + pages.size() + " pages.";
+        } else if (canSubmit) {
+            message = "Partial audit: " + totalAnswered + " questions answered. " + totalMissing + " questions unanswered across omitted sections.";
+        } else {
+            message = "Empty audit: No questions have been answered yet. At least one question must be answered to submit.";
+        }
 
-        return new CompletenessReportDTO(complete, totalMissing, missingByPage, message);
+        return new CompletenessReportDTO(complete, canSubmit, totalAnswered, totalMissing, missingByPage, message);
     }
 
     @Transactional
@@ -367,8 +379,8 @@ public class AuditService {
                 .orElseThrow(() -> new IllegalArgumentException("Pilot location not found: " + locationId));
 
         CompletenessReportDTO report = validateCompleteness(locationId);
-        if (!report.isComplete()) {
-            throw new IllegalStateException("Audit submission blocked: Unanswered scored questions remain. " + report.getMessage());
+        if (!report.isCanSubmit()) {
+            throw new IllegalStateException("Audit submission blocked: Empty audit. At least one question must be answered before submitting.");
         }
 
         List<AuditPage> pages = pageRepository.findByPilotLocationIdOrderByPageNumberAsc(locationId);
