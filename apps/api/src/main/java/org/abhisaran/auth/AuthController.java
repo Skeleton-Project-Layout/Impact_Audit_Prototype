@@ -43,7 +43,7 @@ public class AuthController {
         this.auditLogService = auditLogService;
     }
 
-    @PostMapping("/login")
+    @PostMapping({"/login", "/login/"})
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request,
                                   HttpServletRequest httpRequest) {
         String clientIp = extractClientIp(httpRequest);

@@ -27,7 +27,7 @@ public class SecurityConfig {
                     "/actuator/health",
                     "/health",
                     "/api/v1/health",
-                    "/api/v1/auth/login"
+                    "/api/v1/auth/**"
                 ).permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/geography/**").permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/facilities/types").permitAll()
